@@ -1,0 +1,18 @@
+# ---- Environnements virtuels ----
+.venv/
+# ---- Python artefacts ----
+__pycache__/
+*.py[cod]
+# ---- IDE / OS ----
+.vscode/
+.idea/
+*.swp
+.DS_Store
+# ---- Logs & secrets ----
+*.log
+.env
+# ---- Docker ----
+*.tar
+# ---- Tests ----
+.coverage
+htmlcov/

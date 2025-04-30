@@ -1,0 +1,8 @@
+exemple:
+Objectif : marquer la tâche [Phase 0 – “Cloner l’exemple LangServe”] comme terminée.
+1. Mets la case [x] correspondante dans `00_ROADMAP.md`.
+2. Ajoute dans `JOURNAL_2025.md` :
+   ## 2025-05-02
+   - [#S0_setup] Clonage et exécution locale OK.(met les informations necessaire pour dire les chaut réaliser dans cette etapes afin que a la fin du projet je puisse avoir connaissance de tout se qui aurai été réaliser
+
+3. Renvoie les 2 fichiers complets sans explications.

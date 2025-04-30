@@ -1,0 +1,1 @@
+« Mission : réaliser Phase 0 – Mise en place environnement & Hello-World (ROADMAD). À chaque tâche terminée : ① coche dans 00_ROADMAP.md, ② entrée dans JOURNAL_2025.md. »
