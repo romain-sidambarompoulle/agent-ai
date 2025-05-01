@@ -17,5 +17,6 @@ jobs:
         run: |
           pip install -r app/requirements.txt
           pip install -e app
+          pip install pytest          # 👈 ajoute ceci
       - name: Run tests
         run: pytest -q
