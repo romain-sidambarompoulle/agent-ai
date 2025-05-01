@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main", "feat/*" ]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: |
+          pip install -r app/requirements.txt
+          pip install -e app
+      - name: Run tests
+        run: pytest -q
