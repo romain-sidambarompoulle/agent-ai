@@ -1,13 +1,22 @@
-"""This is a template for a custom chain.
+"""Custom chain avec mémoire Chroma."""
 
-Edit this file to implement your chain logic.
-"""
-
+# --- Imports ---------------------------------------------------------------
 from langchain_openai import ChatOpenAI
 from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain.prompts.chat import ChatPromptTemplate
-from langchain.schema.runnable import Runnable
+from langchain.schema.runnable import Runnable, RunnableLambda
+from langchain.vectorstores import Chroma
+from langchain.embeddings.openai import OpenAIEmbeddings
 
+# --- Mémoire ---------------------------------------------------------------
+EMBED = OpenAIEmbeddings()            # ↳ traduit texte → vecteur
+MEMORY = Chroma(
+    collection_name="chat_memory",    # nom du tiroir
+    embedding_function=EMBED,
+    persist_directory="app/data/chroma"
+)
+
+# --- Fonction “joke” (inchangée) -------------------------------------------
 joke_func = {
     "name": "joke",
     "description": "A joke",
@@ -24,10 +33,40 @@ joke_func = {
     },
 }
 
+# ---------------------------------------------------------------------------
+
 
 def get_chain() -> Runnable:
-    """Return a chain."""
-    prompt = ChatPromptTemplate.from_template("tell me a joke about {topic}")
-    model = ChatOpenAI().bind(functions=[joke_func], function_call={"name": "joke"})
+    """Chaîne avec recherche + sauvegarde mémoire (signature OK)."""
+
+    last_prompt = {}          # petit conteneur qui vivra dans la closure
+
+    # 1️⃣  Chercher souvenirs + enregistrer le prompt
+    def _add_context(inputs: dict) -> dict:
+        user_prompt = inputs["topic"]
+        last_prompt["topic"] = user_prompt      # on garde pour plus tard
+        similar = MEMORY.similarity_search(user_prompt, k=4)
+        context = "\n".join(d.page_content for d in similar)
+        inputs["context"] = context
+        return inputs
+    add_context = RunnableLambda(_add_context)
+
+    # 2️⃣  Prompt enrichi
+    prompt = ChatPromptTemplate.from_template(
+        "{context}\n\ntell me a joke about {topic}"
+    )
+
+    # 3️⃣  Modèle + parser
+    model = ChatOpenAI().bind(
+        functions=[joke_func], function_call={"name": "joke"}
+    )
     parser = JsonOutputFunctionsParser()
-    return prompt | model | parser
+
+    # 4️⃣  Sauvegarde — n’accepte qu’un seul arg (result)
+    def _store_in_memory(result):
+        MEMORY.add_texts([last_prompt["topic"], str(result)])
+        return result
+    store_in_memory = RunnableLambda(_store_in_memory)
+
+    # 5️⃣  Pipeline final
+    return add_context | prompt | model | parser | store_in_memory
