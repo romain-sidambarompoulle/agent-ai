@@ -38,6 +38,26 @@
 - Swagger (`/docs`) toujours HS (bug LangServe 0.3.1) — sera résolu dès LangServe 0.3.2.
 - **Prochaine étape : Sprint 1 — installation de Chroma, ajout mémoire / RAG.**
 
+## 2025-05-02 – Fin #S1_chroma
+| Date | Action | Détail / Commande / Décision |
+|------|--------|-----------------------------|
+| 2025-05-01 | **Création branche** | `git checkout -b feat/s1-chroma` |
+| 2025-05-01 | **Installation Chroma** | `pip install chromadb` & ajout dans `requirements.txt` |
+| 2025-05-01 | **Ajout mémoire** dans `app/langserve_launch_example/chain.py` | - `OpenAIEmbeddings()` <br>- `MEMORY = Chroma(collection_name="chat_memory", persist_directory="app/data/chroma")` |
+| 2025-05-01 | **Pipeline mémoire** | 1) `similarity_search` ➜ contexte <br>2) LLM <br>3) `add_texts()` ➜ archivage |
+| 2025-05-01 | **Tests PowerShell** | *Playground* instable, Swagger cassé → **standardiser** les appels via `Invoke-RestMethod` (ex. `{"input":{"topic":"cats"}}`). |
+| 2025-05-01 | **Dossier de persistance ignoré** | Ajout `app/data/chroma/` dans `.gitignore` **et** `.dockerignore` pour éviter fichiers binaires et erreurs de version. |
+| 2025-05-01 | **Image Docker : sprint1** | `docker build -t agent-ai:sprint1 .` |
+| 2025-05-01 | **Port mapping** | Uvicorn par défaut 8000 → conteneur lancé avec `-p 8001:8000` |
+| 2025-05-01 | **Variable d’env.** | `OPENAI_API_KEY` passée au conteneur ; **clé factice** utilisée dans CI. |
+| 2025-05-02 | **Workflow CI GitHub** | `.github/workflows/ci.yml` → installe dépendances + `pytest -q`. <br>Ajout `env: OPENAI_API_KEY: "sk-test-dummy"` pour satisfaire la validation Pydantic. |
+| 2025-05-02 | **CI verte** | Run `ci: set dummy OPENAI_API_KEY` ✔️ (voir onglet *Actions*). |
+| 2025-05-02 | **Nettoyage image** | `.dockerignore` enrichi : `.venv/`, `__pycache__/`, `.git/`, `docs/`, `tests/`. Taille image sprint1 ≃ 1,5 Go ➜ 0,9 Go. |
+| 2025-05-02 | **Fin Sprint 1** | Mémoire vectorielle opérationnelle en local & Docker, pipeline CI automatisé. Prochain sprint : **orchestration LangGraph**. |
 
-
+### Décisions / points d’attention
+- **Tests d’API** : exécuter uniquement via PowerShell (`Invoke-RestMethod`), pas via `/playground` tant que le bug Swagger de LangServe 0.3.1 persiste. :contentReference[oaicite:0]{index=0}&#8203;:contentReference[oaicite:1]{index=1}  
+- **Clé OpenAI dans CI** : valeur factice `sk-test-dummy` pour ne pas consommer de quota ; acceptable car la suite de tests n’appelle pas l’API.  
+- **Chroma & compatibilité** : toujours supprimer `app/data/chroma/` avant un changement majeur de version pour éviter l’erreur `KeyError: '_type'`.  
+- **Port par défaut** : si le `CMD` Uvicorn n’indique pas `--port 8001`, mapper le conteneur `-p 8001:8000`.
 

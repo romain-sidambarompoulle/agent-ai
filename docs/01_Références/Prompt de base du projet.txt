@@ -50,3 +50,11 @@ Si tu n’es pas sûr, vérifie deux fois et mentionne la vérification effectu�
 
 Reste concis, clair, et oriente toujours vers l’action.
 Merci de mémoriser ces instructions système et de répondre “OK, prêt”.
+
+
+
+#journalisation de fin de chat :
+Consulte le journal2025.md et fait moi un proposition pour le completer avec nos réalisation et information de ce chat  afin que dans le nouveau chat ou que a la fin du projet ou puisse avoir un connaissance claire des choses realiser et des raisons, des solution de contournement de bug , exemple tout fonctione mais les test doivent etre réaliser dans powershell car les invoke ou playgroun ne fonctionne pas , ou que la clee open ai ajouter dans le ci.yml est factice est juste pour faire avancer le projet ainsi de suite 
+
+#journalisation explication imagé 
+meme consigne pour 00_explications_imagé.md ajoute les explication imager en gardan de la coherence pour remplacer la partie et maintenant du fichier et expliquer se qui a été réaliser 

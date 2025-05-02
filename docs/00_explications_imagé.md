@@ -45,12 +45,15 @@ Nous avons construit **les fondations habitables** : structure, plomberie de ba
 > **Pas encore d’appartements meublés** (agents IA), mais un rez‑de‑chaussée prêt à accueillir de nouvelles pièces.
 
 ---
+## 🌟 Ce que nous venons de construire (Sprint 1)
 
-## Et maintenant ? 🏠➡️🧠
-**Sprint 1 : “Aménager la mémoire”**
-- **Chroma** = le garde‑meuble (stock des souvenirs).
-- **RAG** = l’ascenseur pour aller chercher ces souvenirs.
-- Objectif : que le concierge (l’agent) se souvienne de ce qu’on lui dit.
+| Étape technique | Image mentale |
+|-----------------|---------------|
+| **Nous avons creusé un “grenier à souvenirs”** (Chroma) dans le hall de l’immeuble « Agent-AI ». | 🏠 ➡️ 🗄️  Le concierge peut désormais ranger chaque conversation (sous forme de cartes index), puis ressortir les plus pertinentes quand un visiteur revient. |
+| **Nous avons pris une photo de l’immeuble avec son grenier** (image Docker `agent-ai:sprint1`). | 📸 ➡️ 🚚  Cette photo tient dans un conteneur maritime : on peut la charger sur n’importe quel quai (machine) et retrouver exactement les mêmes pièces et meubles. |
+| **Sur le quai, nous avons branché le courant** (`-e OPENAI_API_KEY=…`). | 🔌  Sans cette prise, l’ascenseur (embeddings OpenAI) restait bloqué au rez-de-chaussée. |
+| **Le port d’accès public est 8001 ; à l’intérieur, le concierge écoute en 8000** (`-p 8001:8000`). | 🌉  On installe une passerelle numérotée 8001 pour que les visiteurs extérieurs trouvent la porte intérieure 8000. |
+| **La caméra de surveillance “CI” vérifie chaque modification** (`pytest` sur GitHub Actions). | 🎥  À chaque nouvelle brique posée, la caméra s’allume : si la porte ne ferme plus ou si le grenier s’écroule, l’alarme rouge s’affiche immédiatement. |
 
-*Prêt à monter les cloisons ?*
+> *En résumé : le hall de l’immeuble se souvient de ses visiteurs, peut être déménagé sans rien casser, et un garde-fou automatique surveille le chantier 24h/24.* 😉
 
