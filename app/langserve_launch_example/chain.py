@@ -1,6 +1,7 @@
 """Custom chain avec mémoire Chroma."""
 
 # --- Imports ---------------------------------------------------------------
+import os  
 from langchain_openai import ChatOpenAI
 from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain.prompts.chat import ChatPromptTemplate
@@ -11,10 +12,14 @@ from app.agent_ai.graph import graph_exec
 
 # --- Mémoire ---------------------------------------------------------------
 EMBED = OpenAIEmbeddings()            # ↳ traduit texte → vecteur
+
+# Choix du répertoire : None ⇒ Chroma in-memory (tests)
+PERSIST_DIR = None if os.getenv("CHROMA_TEMP") else "app/data/chroma"
+
 MEMORY = Chroma(
-    collection_name="chat_memory",    # nom du tiroir
+    collection_name="chat_memory",
     embedding_function=EMBED,
-    persist_directory="app/data/chroma"
+    persist_directory=PERSIST_DIR,
 )
 
 # --- Fonction “joke” (inchangée) -------------------------------------------

@@ -31,5 +31,8 @@ jobs:
           # 3) installe ton code en editable afin que `import app...` fonctionne
           pip install -e .
 
+      - name: Clean chroma artefacts
+        run: rm -rf app/data/chroma || true  
+
       - name: Run tests
         run: pytest -q
