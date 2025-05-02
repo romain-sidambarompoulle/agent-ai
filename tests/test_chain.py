@@ -1,4 +1,4 @@
-from langserve_launch_example import get_chain
+from app.langserve_launch_example import get_chain
 
 
 def test_get_chain_returns_chain() -> None:
