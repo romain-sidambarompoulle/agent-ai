@@ -2,15 +2,16 @@ name: CI
 
 on:
   push:
-    branches: [ "main", "feat/**" ]   # prend aussi les branches feat/…
+    branches: [ "main", "feat/**" ]
   pull_request:
 
 jobs:
   tests:
     runs-on: ubuntu-latest
     env:
-      OPENAI_API_KEY: "sk-test-dummy"          # clé factice
-      PHOENIX_COLLECTOR_ENDPOINT: http://localhost:6006   # endpoint par défaut
+      OPENAI_API_KEY: "sk-test-dummy"
+      PHOENIX_COLLECTOR_ENDPOINT: http://localhost:6006
+      PYTHONPATH: ${{ github.workspace }}           # ← ajoute la racine au path
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,16 +21,15 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install project + deps
         run: |
           python -m pip install --upgrade pip
+          # 1) dépendances listées dans app/requirements.txt
           pip install -r app/requirements.txt
-          pip install -e app
-          # ↳ compléments pour le test Phoenix
-          pip install pytest \
-                      opentelemetry-sdk>=1.32.1 \
-                      arize-phoenix>=8.31.0 \
-                      openinference-instrumentation-crewai>=0.1.28
+          # 2) CrewAI & compléments éventuels
+          pip install crewai openinference-instrumentation-crewai arize-phoenix opentelemetry-sdk pytest
+          # 3) installe ton code en editable afin que `import app...` fonctionne
+          pip install -e .
 
       - name: Run tests
         run: pytest -q
