@@ -1,7 +1,7 @@
 """langserve_launch_example package."""
 from importlib import metadata
 
-from langserve_launch_example.chain import get_chain
+from .chain import get_chain          # import relatif = toujours valable où que soit le paquet
 
 try:
     __version__ = metadata.version(__package__)
