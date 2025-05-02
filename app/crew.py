@@ -32,7 +32,7 @@ task = Task(
 crew = Crew(
     agents=[analyste, redacteur, verificateur],
     tasks=[task],
-    process=Process.hierarchical,   # ou Process.sequential
+    process=Process.sequential,   # ✅ plus besoin de manager pour le moment
     verbose=True,
 )
 
