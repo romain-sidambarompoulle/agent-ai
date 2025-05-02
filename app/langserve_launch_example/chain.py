@@ -7,6 +7,7 @@ from langchain.prompts.chat import ChatPromptTemplate
 from langchain.schema.runnable import Runnable, RunnableLambda
 from langchain.vectorstores import Chroma
 from langchain.embeddings.openai import OpenAIEmbeddings
+from app.agent_ai.graph import graph_exec
 
 # --- Mémoire ---------------------------------------------------------------
 EMBED = OpenAIEmbeddings()            # ↳ traduit texte → vecteur
