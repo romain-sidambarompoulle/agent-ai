@@ -13,7 +13,11 @@ def clean_chroma():
 def mock_litellm(monkeypatch):
     def _fake_completion(**kwargs):
         return SimpleNamespace(
-            choices=[SimpleNamespace(message={"content": "FAKE_ANSWER"})],
-            usage={"total_tokens": 1},
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(content="FAKE_ANSWER")
+            )
+        ],
+        usage={"total_tokens": 1},
         )
     monkeypatch.setattr(litellm, "completion", _fake_completion)
