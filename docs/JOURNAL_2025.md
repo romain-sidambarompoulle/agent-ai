@@ -232,3 +232,16 @@ Les clients bénéficient d’un service stable.
 
 L’équipe garde en tête la dette technique sans être noyée de messages de dépendances.
 
+## 2025-05-05 – Sprint 3¾ : **Consolidation Git & CI verte**
+    | Date | Action | Détail / Décision |
+    |------|--------|------------------|
+    | 2025-05-05 | **Migrations dépendances** | Pin **langchain-core 0.3.58**, **langchain-openai 0.3.16**, **langchain-chroma 0.2.3**, **rich 13.9.4**, **jiter 0.8.2** pour aligner CrewAI & LangChain. |
+    | 2025-05-05 | **CI verte** | Workflow GitHub repasse au vert (4 tests) après upgrade dépendances. |
+    | 2025-05-05 | **Nettoyage branches** | `chore/update-langchain-imports`, `feat/s1-chroma`, `feat/s2-graph`, `feat/s3-crewai` ➜ contenus déjà dans **main** ; branches supprimées local + GitHub. |
+    | 2025-05-05 | **Audit Git** | `git fsck` → *0 commit utile orphelin* ; repo 100 % sain. |
+    | 2025-05-05 | **Règle d’or documentée** | > *« Une branche fonctionnelle + tests verts doit **toujours** être fusionnée dans `main`, puis supprimée. Garder des branches “finies” hors de `main` casse la synergie du projet (agents, Phoenix, Docker). »* |
+
+    > _Image mentale_ : on a démonté tous les échafaudages inutiles, resserré les boulons de la tuyauterie Python, et la caméra CI confirme que le bâtiment est prêt pour les prochains travaux Docker / CrewAI._
+    "
+  path: ./         # racine dépôt
+  venv: off
