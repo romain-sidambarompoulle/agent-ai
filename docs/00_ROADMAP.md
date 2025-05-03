@@ -16,9 +16,10 @@
 | **1** | Agent enrichi | Ajouter mémoire + mini RAG (Chroma). |
 | **2** | Orchestration **LangGraph** | Refactoriser en graphe d’états « think‑validate‑act ». |
 | **3** | Multi‑agents **CrewAI** | Créer 2‑3 rôles (analyste, vérificateur, rédacteur) et voter sur la réponse. |
-| **4** | LLM local & *docker‑compose* | Lancer **Ollama** en conteneur, basculer l’endpoint OpenAI vers le serveur **llama.cpp**. |
-| **5** | Tests, Guardrails & Observabilité | Intégrer **TruLens**, règles **Guardrails Colang**, dashboard **Phoenix**. |
-| **6** | Intégration ERP *(optionnel / en pause)* | L’ERP pourra être ajouté quand prêt. |
+| **4** | Création d'un RAG pour experimentation| Commprendre le RAG sa création son utilisation et comprendre comment en tirer le plus davantage. |
+| **5** | LLM local & *docker‑compose* | Lancer **Ollama** en conteneur, basculer l’endpoint OpenAI vers le serveur **llama.cpp**. |
+| **6** | Tests, Guardrails & Observabilité | Intégrer **TruLens**, règles **Guardrails Colang**, dashboard **Phoenix**. |
+| **7** | Intégration ERP *(optionnel / en pause)* | L’ERP pourra être ajouté quand prêt. |
 
 ---
 

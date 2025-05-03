@@ -34,6 +34,7 @@ crew = Crew(
     tasks=[task],
     process=Process.sequential,   # ✅ plus besoin de manager pour le moment
     verbose=True,
+    trace=True
 )
 
 def run(question: str) -> str:

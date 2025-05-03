@@ -8,6 +8,10 @@ COPY . /app
 # 2.  Installe ton code en editable (-e app)
 # 3.  Ajoute les briques externes manquantes (langchain-community, sse_starlette) + langsmith
 # ─────────────────────────────────────────────────────────────────────────
+# -- outils nécessaires pour pip install depuis git ------------------------
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir -r app/requirements.txt \
  && pip install --no-cache-dir -e app \
  && pip install --no-cache-dir langchain-community sse_starlette langsmith==0.1.147

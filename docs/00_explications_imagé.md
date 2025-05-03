@@ -57,3 +57,51 @@ Nous avons construit **les fondations habitables** : structure, plomberie de ba
 
 > *En résumé : le hall de l’immeuble se souvient de ses visiteurs, peut être déménagé sans rien casser, et un garde-fou automatique surveille le chantier 24h/24.* 😉
 
+
+## 🌟 Ce que nous venons de construire (Sprint 2)
+
+| Étape technique                                                    | Image mentale                                                                      |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| **Centrale domotique installée** : refactor en **LangGraph**       | 🔌🏠 Le disjoncteur principal distribue le courant vers trois pièces.              |
+| **Trois pièces éclairées** : *think* → *validate* → *act*          | 💡➡️🧐➡️🚀 Le concierge réfléchit, vérifie, puis allume l’enseigne publique.       |
+| **Prise murale CrewAI** posée dans `validate()` (stub)             | 🔌🤝 Une douille libre attend l’arrivée de plusieurs concierges au Sprint 3.       |
+| **Alarmes anti-court-circuit** : 2 tests Pytest + caméra CI GitHub | 🚨🎥 Si un fil chauffe, le voyant rouge s’allume automatiquement.                  |
+| **Photo Docker `agent-ai:sprint2`** prise & testée                 | 📸🛳️ La domotique voyage désormais dans un conteneur prêt à être déployé partout. |
+
+*En résumé : l’immeuble réfléchit avant d’agir et il est prêt à accueillir une équipe de concierges spécialistes.
+
+## 🌟 Ce que nous venons de construire (Sprint 3)
+
+Nous avons transformé l’immeuble en **co-propriété intelligente** :  
+trois concierges se relaient désormais pour fournir la meilleure réponse,  
+et l’installation électrique a été remise aux normes Python 3.11.
+
+| Étape technique | Image mentale |
+|-----------------|---------------|
+| **Rebâtir la chaufferie** : nouveau **venv 3 .11** (Python 3.13 ≠ CrewAI) | 🔥🏗️  On a vidé l’ancienne chaudière et installé un brûleur compatible avec le nouveau carburant CrewAI. |
+| **Remplacer les badges concierges** (nouvelle signature `Agent(role, goal, backstory, llm)`) | 🪪  Chaque concierge a reçu un passeport complet ; fini les badges anonymes. |
+| **Réunion à tour de rôle** : `Process.sequential` (pas encore de manager) | 🔔📜  Les concierges se passent la cloche : un parle, puis donne la parole au suivant, sans chef d’orchestre central pour l’instant. |
+| **Appeler la réunion** via `crew.kickoff(inputs={question})` | 🎤🚀  On appuie sur le bouton “Kick-off” ; la séance démarre et rend un verdict signé. |
+| **Graphe renvoie l’état complet** (plus le booléen `True`) | 📁➡️📁  Le même classeur circule d’une pièce à l’autre, enrichi de la page `llm_answer` avant de ressortir. |
+| **Caméra Pytest** : 3 tests verts (dont vérification `llm_answer`) | 🎥🟢  L’alarme reste muette ; chaque scénario confirme que la lumière s’allume bien à la sortie. |
+| **Clé OPENAI factice en CI** | 🔑🪄  La serrure reconnaît une fausse clé de démonstration ; personne ne consomme de vrai crédit. |
+| **Exécutions API / tests** exclusivement **PowerShell** (`Invoke-RestMethod`) | 🖥️⚡  On passe par la porte latérale PowerShell tant que l’ascenseur Swagger reste bloqué. |
+
+> *En résumé : l’immeuble réfléchit, vérifie et agit en équipe ;  
+> les tuyaux Python ont été changés pour éviter les fuites, et la caméra de surveillance confirme que tout fonctionne.* 😉
+
+## 🌟 Sprint 3 — 2ᵉ mi-temps : “Micro, caméras et tableau de bord”  
+
+| Étape technique                                             | Image mentale                                                                           |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **Brancher un “micro” Phoenix** (`arize-phoenix serve`)     | 🎙️🦅  On fixe un micro open-source dans la salle de réunion pour enregistrer chaque mot. |
+| **Changer l’étiquette du micro** (`phoenix-tracing` → `arize-phoenix`) | 🔖  On décolle l’ancienne étiquette et on colle la nouvelle, la prise fait “clic !”. |
+| **Déclarer la prise** : `trace=True` dans `crew.py`         | 🔌  On appuie sur l’interrupteur ; le voyant rouge s’allume, la bande tourne. |
+| **Tableau de bord** `http://localhost:6006`                 | 📊  Un écran mural affiche en temps réel le battement des concierges. |
+| **Test Pytest “le micro enregistre”**                       | 🚨  Un technicien tape dans le micro ; si le vu-mètre ne bouge pas, l’alarme sonne. |
+| **Nettoyer les lieux avant chaque test** (`CHROMA_TEMP=1`)  | 🧹  On met un tapis jetable sur le sol : aucune empreinte ne reste après la visite. |
+| **Fausse voix LLM** : mock **LiteLLM**                      | 🎭  Un acteur lit le script à la place des vraies célébrités ; on ne paye pas d’honoraires API. |
+| **CI GitHub verte** — 14 exécutions dont la dernière “OK”   | ✅🎥  La caméra de chantier clignote en vert : tout le monde a son casque de sécurité. |
+
+> *En résumé : la copropriété discute désormais sous contrôle d’un micro Phoenix,  
+> la caméra CI valide que tout est bien enregistré, et personne ne dérange l’immeuble voisin (API) grâce à un acteur de doublage.* 😉
