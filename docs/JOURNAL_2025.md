@@ -4,7 +4,7 @@
 - Création `00_OVERVIEW_INSTRUCTIONS.md`
 - Création `JOURNAL_2025.md`
 - Création méta prompt pour journalisation dans le dossier 01-références
-- [#S0_setup] Mise en place environnement & Hello‑World 
+- Démarrage du Sprint 0 : **#S0_setup** (objectif : stack LangServe « Hello World » fonctionnelle).
 
 ## 2025-04-30 – Fin #S0_setup
 | Date | Action | Détail / Commande |
@@ -18,10 +18,46 @@
 | 2025-04-29 |**Test serveur dev**|`uvicorn ... --reload --port 8000` → `/invoke` OK|
 | 2025-04-30 |**Résolution conflits dépendances**| - Pinned `langserve==0.3.1`<br>- Pinned `langsmith==0.1.147`<br>- Pinned `pydantic>=2.10,<3`|
 | 2025-04-30 |**Swagger cassé / laissé tel quel**|Bug connu LangServe 0.3.1 (affecte seulement `/docs`)|
-| 2025-04-30 |**Dockerisation réussie**|`docker build -t langserve-hello .` ✔️|
+| 2025‑04‑30 | **Réorganisation projet** | renommage dossier `agent-ai`, purge `.git` imbriqué, suppression Poetry, création `setup.py`, génération `app/requirements.txt` (UTF‑8) |
+| 2025‑04‑30 | **Dépendances manquantes** | Ajout `langchain-community`, `sse_starlette` |
+| 2025‑04‑30 | **Dockerisation** | Dockerfile : copie `requirements.txt`, `pip install -e app`, ajout LangSmith ; `docker build -t agent-ai .` ✔️ |
+| 2025‑04‑30 | **Fix encodage requirements** | Conversion UTF‑16 → UTF‑8 pour éviter erreur install dans l’image |
+| 2025‑04‑30 | **Image testée** | `docker run -p 9000:8000 … agent-ai` → `/invoke` 200 OK |
 | 2025-04-30 |**Conteneur fonctionne**|`docker run -p 8000:8000 -e OPENAI_API_KEY ...`<br>`/invoke` → 200 OK|
 | 2025-04-30 |**Port 8000 libéré**|Arrêt Uvicorn + `docker stop $(docker ps -q)`|
+| 2025‑04‑30 | **Initialisation Git & push** | `git init` ➝ `git remote add origin …` ➝ `git push -u origin main` |
 | 2025-04-30 |**Fin Sprint 0**|Empilement stable : Python 3.12, FastAPI 0.115, Pydantic 2.11, LangServe 0.3.1, LangSmith 0.1.147. `/invoke` OK local & Docker.|
-- API /invoke OK (venv + Docker).
-- Swagger encore HS (bug LangServe 0.3.1).
-- Prêt pour #S1_enrichi : mémoire + RAG (Chroma).
+## 2025-05-01 – Décision tests PowerShell
+| Date        | Action                                    | Détail / Commande |
+|-------------|-------------------------------------------|-------------------|
+| 2025-05-01  | Standardiser l’exécution des tests API    | Tous les appels à l’endpoint `/invoke` se font désormais **exclusivement en PowerShell** via `Invoke-RestMethod`. Le Playground et `/docs` restent accessibles, mais ne servent plus de référence de recette tant que le bug Swagger de LangServe 0.3.1 n’est pas corrigé. |
+
+- API `/invoke` OK en local (**venv**) et dans le conteneur Docker (**port 9000**).
+- Dockerfile final : installation `requirements.txt` UTF‑8 + `uvicorn` ; image **`agent-ai`** construite et testée.
+- Dépôt Git prêt (branche **main** sur GitHub).
+- Swagger (`/docs`) toujours HS (bug LangServe 0.3.1) — sera résolu dès LangServe 0.3.2.
+- **Prochaine étape : Sprint 1 — installation de Chroma, ajout mémoire / RAG.**
+
+## 2025-05-02 – Fin #S1_chroma
+| Date | Action | Détail / Commande / Décision |
+|------|--------|-----------------------------|
+| 2025-05-01 | **Création branche** | `git checkout -b feat/s1-chroma` |
+| 2025-05-01 | **Installation Chroma** | `pip install chromadb` & ajout dans `requirements.txt` |
+| 2025-05-01 | **Ajout mémoire** dans `app/langserve_launch_example/chain.py` | - `OpenAIEmbeddings()` <br>- `MEMORY = Chroma(collection_name="chat_memory", persist_directory="app/data/chroma")` |
+| 2025-05-01 | **Pipeline mémoire** | 1) `similarity_search` ➜ contexte <br>2) LLM <br>3) `add_texts()` ➜ archivage |
+| 2025-05-01 | **Tests PowerShell** | *Playground* instable, Swagger cassé → **standardiser** les appels via `Invoke-RestMethod` (ex. `{"input":{"topic":"cats"}}`). |
+| 2025-05-01 | **Dossier de persistance ignoré** | Ajout `app/data/chroma/` dans `.gitignore` **et** `.dockerignore` pour éviter fichiers binaires et erreurs de version. |
+| 2025-05-01 | **Image Docker : sprint1** | `docker build -t agent-ai:sprint1 .` |
+| 2025-05-01 | **Port mapping** | Uvicorn par défaut 8000 → conteneur lancé avec `-p 8001:8000` |
+| 2025-05-01 | **Variable d’env.** | `OPENAI_API_KEY` passée au conteneur ; **clé factice** utilisée dans CI. |
+| 2025-05-02 | **Workflow CI GitHub** | `.github/workflows/ci.yml` → installe dépendances + `pytest -q`. <br>Ajout `env: OPENAI_API_KEY: "sk-test-dummy"` pour satisfaire la validation Pydantic. |
+| 2025-05-02 | **CI verte** | Run `ci: set dummy OPENAI_API_KEY` ✔️ (voir onglet *Actions*). |
+| 2025-05-02 | **Nettoyage image** | `.dockerignore` enrichi : `.venv/`, `__pycache__/`, `.git/`, `docs/`, `tests/`. Taille image sprint1 ≃ 1,5 Go ➜ 0,9 Go. |
+| 2025-05-02 | **Fin Sprint 1** | Mémoire vectorielle opérationnelle en local & Docker, pipeline CI automatisé. Prochain sprint : **orchestration LangGraph**. |
+
+### Décisions / points d’attention
+- **Tests d’API** : exécuter uniquement via PowerShell (`Invoke-RestMethod`), pas via `/playground` tant que le bug Swagger de LangServe 0.3.1 persiste. :contentReference[oaicite:0]{index=0}&#8203;:contentReference[oaicite:1]{index=1}  
+- **Clé OpenAI dans CI** : valeur factice `sk-test-dummy` pour ne pas consommer de quota ; acceptable car la suite de tests n’appelle pas l’API.  
+- **Chroma & compatibilité** : toujours supprimer `app/data/chroma/` avant un changement majeur de version pour éviter l’erreur `KeyError: '_type'`.  
+- **Port par défaut** : si le `CMD` Uvicorn n’indique pas `--port 8001`, mapper le conteneur `-p 8001:8000`.
+
