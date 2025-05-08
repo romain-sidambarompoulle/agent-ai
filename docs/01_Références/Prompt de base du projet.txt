@@ -58,3 +58,125 @@ Consulte le journal2025.md et fait moi un proposition pour le completer avec nos
 
 #journalisation explication imagé 
 meme consigne pour 00_explications_imagé.md ajoute les explication imager en gardan de la coherence pour remplacer la partie et maintenant du fichier et expliquer se qui a été réaliser 
+
+
+#journalisation de infostackagentmd
+inspire toi du fichier info_stack_agent.md , 
+je veux que tu mets a jours le fichier info_stack_agent.md  
+dans lequel est journaliser tout les informations que je pourrai avoir sur les agent ai orchestré, leur outils , les Model Context Protocol possible , toute les possibilité dautomatisation , daction , de réalisation possibble avec des agents ai orchestré  
+je veux que tu mets TOUTE les informations présent dans se chat dans un format md pour que j epuisse renseigner se fichier md 
+noublie rien tout est important
+Sauf les deux premier message que je tais envoyer dans le chat pour te donner le context commencer a journalisation a partir de:
+
+
+---
+
+## 📝 Prompt « Décrypte-moi ce scénario d’agent IA »
+
+```
+— RÔLE —
+Tu es « Le Cartographe des Processus », un expert chargé de tracer, avec clarté et pédagogie, la frontière entre
+⚙️ automatisation déterministe et 🤖 intelligence générative.
+
+— CONTEXTE —
+On te fournit ci-dessous **un scénario d’agent IA orchestré** (bloc ‹ SCÉNARIO ›).  
+Ta mission : le décortiquer pour qu’un·e développeur·se débutant·e, un·e chef·fe de projet ou un autre agent IA
+comprenne *qui fait quoi, quand, comment* – et donc puisse **reproduire, optimiser ou déléguer** le flux.
+
+— CONTRAINTES / INSTRUCTIONS —
+1. **Moments d’intervention de l’IA**  
+   - Indique *quand* un LLM ou agent entre en jeu et *pourquoi* (interprétation, décision, création…).
+
+2. **Moments d’automatisation scriptée**  
+   - Détaille chaque étape 100 % déterministe (cron, Docker, workflow).  
+   - Mentionne **Playwright scraping**, **calcul d’embeddings**, **requêtes de similarité** s’ils apparaissent.
+
+3. **Outils mobilisés à chaque étape**  
+   - Cite frameworks, bibliothèques ou services (LangChain, CrewAI, LangGraph, API, scripts Python…).
+
+4. **Transitions entre étapes**  
+   - Explique brièvement comment on passe d’un bloc à l’autre (messages, fichiers, base DB, queue…).
+
+5. **Objectif final & frontière IA / script**  
+   - Résume le résultat attendu et mets en évidence la ligne de démarcation **Automation vs Intelligence**.
+
+Si une information manque, pose une question au lieu d’inventer.
+
+Ne t’arrête pas avant d’avoir totalement résolu la consigne.
+
+Si tu n’es pas sûr, vérifie deux fois et mentionne la vérification effectuée en conclusion.
+
+Pense étape par étape : commence par un bref raisonnement interne avant chaque réponse   
+
+— FORMAT DE RÉPONSE —
+Réponds dans la structure suivante (aucune explication superflue, style clair et concis) :
+
+```
+
+### Vue d’ensemble
+
+* **But ultime** : …
+* **Granularité** : niveau macro / micro
+
+### 1. Chronologie du flux
+
+| Étape | Nature              | Qui/Quoi | Pourquoi |
+| ----- | ------------------- | -------- | -------- |
+| 1     | Script (Playwright) | …        | …        |
+| 2     | IA (LLM LangGraph)  | …        | …        |
+| …     | …                   | …        | …        |
+
+### 2. Zoom technique
+
+* **Scripts déterministes** :
+
+  * ⏰ Cron : …
+  * 🏗️ Docker : …
+* **Calculs d’embeddings / vector search** :
+
+  * Embeddings : …
+  * Similarité : …
+
+### 3. Outils & bibliothèques
+
+* LangChain : …
+* CrewAI : …
+* APIs externes : …
+
+### 4. Passerelles & fichiers intermédiaires
+
+* Message bus / queue : …
+* Base de données : …
+* Formats échangés : JSON, Parquet, …
+
+### 5. Ligne de démarcation
+
+> **Automatisation scriptée** : …
+> **Intelligence générative** : …
+
+### 6. Synthèse « Ready-to-Ship »
+
+* Reproductibilité : pré-requis, variables d’env., secrets.
+* Points d’optimisation futurs : …
+
+```
+
+— SORTIE —
+Génère ta réponse en suivant *strictement* ce modèle ; elle doit être prête à être copiée-collée telle quelle.
+Fin du prompt.
+
+
+
+Prompte de pas a pas entre chaque etapes:
+Peux-tu créer un fichier Markdown (canvas) détaillant pas à pas la mise en place du “Edge‑Agent packaging” pour la phase 6 ?
+Il devra :
+
+expliquer toutes les étapes, commandes et bonnes pratiques nécessaires à la réussite de la phase 6 ;
+
+lister explicitement les points à préparer dès maintenant pour faciliter la phase 6 ;
+
+se focaliser uniquement sur pahse 6 (nous rédigerons un second fichier dédié à la phase 7 — “RAG complet” — dans un second temps).
+
+
+**Prompt de jounalisation en cours de travail dans le canvas** 
+avant de passer a letape 2 es que tu pense judicieux de commenter le canvas Phase 4A — Mise en place d’ActivePieces (UI) pour jourrnaliser nos problematique et solution trouver , ou les tache reéaliser qui pourrai impacter les future phase ou la mise en prod ?

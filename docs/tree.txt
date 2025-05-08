@@ -1,0 +1,45 @@
+.
+|-- .dockerignore
+|-- .env
+|-- .github
+|   `-- workflows
+|       `-- ci.yml
+|-- .gitignore
+|-- Dockerfile
+|-- Dockerfile.app
+|-- TREE.md
+|-- app
+|   |-- .env.gcp.yaml.example
+|   |-- LICENSE
+|   |-- Makefile
+|   |-- README.md
+|   |-- agent_ai
+|   |   |-- graph.py
+|   |   `-- graph_runner.py
+|   |-- agent_ai_app.egg-info
+|   |   |-- PKG-INFO
+|   |   |-- SOURCES.txt
+|   |   |-- dependency_links.txt
+|   |   `-- top_level.txt
+|   |-- crew.py
+|   |-- data
+|   |   `-- chroma
+|   |       `-- chroma.sqlite3
+|   |-- langserve_launch_example
+|   |   |-- __init__.py
+|   |   |-- chain.bak
+|   |   |-- chain.py
+|   |   `-- server.py
+|   |-- requirements.txt
+|   `-- setup.py
+|-- docker-compose.yml
+|-- requirements.txt
+|-- setup.py
+`-- tests
+    |-- __init__.py
+    |-- conftest.py
+    |-- test_chain.py
+    |-- test_graph.py
+    `-- test_tracing_phoenix.py
+
+9 directories, 33 files
