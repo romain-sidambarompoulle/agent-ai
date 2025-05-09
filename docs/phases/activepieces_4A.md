@@ -266,51 +266,100 @@ Ajouter un job rapide dans `.github/workflows/ci.yml` :
 
 ## Journal de déploiement – **Phase 4A / ActivePieces**
 
-*Session : 9 mai 2025 – Repo :\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*`agent-ai`*
+> *Session unique : 9 mai 2025 – dépôt **agent-ai***  
+> Libellés clairs, commandes YAML, résultat : ✔️ / ❌ / 🟡 / ⏳
 
-Modèle calqué sur l’exemple `ActivePieces 4A` : chaque tâche comporte
-• un libellé clair • l’action réalisée • la (ou les) commande(s) exécutée(s) au format YAML.
+---
 
-2\. Clone du code ActivePieces (sous-module)
+### 1. Clone initial du sous-module **ActivePieces** (08/05/2025)
 
-| 2-1 | **Se placer à la racine du projet**                                                                                                                                                                                                                              | `yaml\ncmd: cd C:\\Users\\Util\\Desktop\\agent-ai\npath: ~\nvenv: off`                                                                                   | ✔️                           |
-| 2-2 | **Tentative clone (URL erronée)**                                                                                                                                                                                                                                | `yaml\ncmd: git submodule add https://github.com/activepieces/activepieces-core.git external/activepieces\npath: C:\\…\\agent-ai\nvenv: off`             | ❌ *« Repository not found »* |
-| 2-3 | **Nettoyage de la tentative ratée**                                                                                                                                                                                                                              | `yaml\ncmd: git submodule deinit -f external/activepieces ; git rm -rf external/activepieces\npath: C:\\…\\agent-ai\nvenv: off`                          | ✔️                           |
-| 2-4 | **Ajout du sous-module (URL correcte)**                                                                                                                                                                                                                          | `yaml\ncmd: git submodule add https://github.com/activepieces/activepieces.git external/activepieces\npath: C:\\…\\agent-ai\nvenv: off`                  | ✔️ clone \~273 Mo            |
-| 2-5 | **Indexation + commit (sur *********************************************************************************************************main********************************************************************************************************* par mégarde)** | `yaml\ncmd: git add .gitmodules external/activepieces && git commit -m \"chore: add ActivePieces GPLv3 as submodule\"\npath: C:\\…\\agent-ai\nvenv: off` | ✔️                           |
+| #  | Action | Commande YAML exécutée | Résultat |
+|----|--------|------------------------|----------|
+| 2-1 | **Se placer à la racine** | `cmd: cd C:\\Users\\Util\\Desktop\\agent-ai`<br>`path: ~` | ✔️ |
+| 2-2 | Clone (URL erronée) | `cmd: git submodule add https://github.com/activepieces/activepieces-core.git external/activepieces` | ❌ *Repository not found* |
+| 2-3 | Nettoyage tentative ratée | `cmd: git submodule deinit -f external/activepieces ; git rm -rf external/activepieces` | ✔️ |
+| 2-4 | **Ajout sous-module correct** | `cmd: git submodule add https://github.com/activepieces/activepieces.git external/activepieces` | ✔️ clone ≈ 273 Mo |
+| 2-5 | Commit (par mégarde sur `main`) | `cmd: git add .gitmodules external/activepieces && git commit -m "chore: add ActivePieces GPLv3 as submodule"` | ✔️ SHA `4dd995f` |
 
-### 2-bis. Réorganisation branches & stash
+---
 
-| B-1 | \*\*Sauvegarde WIP (docs & Docker) dans un \*\****stash***                                                                                                                                                          | `yaml\ncmd: git stash push -m \"wip: docs et docker avant réorganisation\"\npath: C:\\…\\agent-ai\nvenv: off`                                                                  | ✔️ stash@{0}               |
-| B-2 | \*\*Création + push branche \*\*\`\`                                                                                                                                                                                | `yaml\ncmd: git branch tenant/demo-activepieces\npath: C:\\…\\agent-ai\nvenv: off`\n`yaml\ncmd: git push -u origin tenant/demo-activepieces\npath: C:\\…\\agent-ai\nvenv: off` | ✔️                         |
-| B-3 | **Alignement de *****************************************************************************************main***************************************************************************************** sur origin** | `yaml\ncmd: git checkout main\npath: C:\\…\\agent-ai\nvenv: off`\n`yaml\ncmd: git reset --hard origin/main\npath: C:\\…\\agent-ai\nvenv: off`                                  | ✔️                         |
-| B-4 | **Retour sur branche de travail + pop stash**                                                                                                                                                                       | `yaml\ncmd: git checkout tenant/demo-activepieces\npath: C:\\…\\agent-ai\nvenv: off`\n`yaml\ncmd: git stash pop\npath: C:\\…\\agent-ai\nvenv: off`                             | ✔️ docs & Docker restaurés |
+### 2. Branche locataire créée… puis annulée
 
-2-ter. Validation du sous-module
+| # | Action | Commande | Résultat |
+|---|--------|----------|----------|
+| B-1 | Stash WIP (docs + Docker) | `cmd: git stash push -m "wip: docs et docker avant réorganisation"` | ✔️ stash@{0} |
+| B-2 | Création **prématurée** `tenant/demo-activepieces` | `cmd: git branch tenant/demo-activepieces`<br>`cmd: git push -u origin tenant/demo-activepieces` | ✔️ *(incohérent vis-à-vis Vision 360°)* |
+| B-3 | Alignement `main` ← origin | `cmd: git checkout main && git reset --hard origin/main` | ✔️ |
+| B-4 | Retour branche locataire + pop stash | `cmd: git checkout tenant/demo-activepieces && git stash pop` | ✔️ |
 
-|     |                              |                                                                                           |                             |
-| --- | ---------------------------- | ----------------------------------------------------------------------------------------- | --------------------------- |
-| V-1 | **Contrôle gitlink**         | `yaml\ncmd: git submodule status external/activepieces\npath: C:\\…\\agent-ai\nvenv: off` | ✔️ `d0847488…` (gitlink OK) |
-| V-2 | **Init/Update profondeur 1** | `yaml\ncmd: git submodule update --init --depth 1\npath: C:\\…\\agent-ai\nvenv: off`      | ✔️                          |
+---
 
-2-quater. Nettoyage fichiers obsolètes
+### 3. Validation sous-module
 
-|     |                                      |                                                                                                                    |                     |
-| --- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------ | ------------------- |
-| N-1 | **Suppression volontaire du README** | `yaml\ncmd: git rm README.md && git commit -m \"chore: remove obsolete README\"\npath: C:\\…\\agent-ai\nvenv: off` | ✔️ commit `a294dfb` |
-| N-2 | **Push branche mise à jour**         | `yaml\ncmd: git push\npath: C:\\…\\agent-ai\nvenv: off`                                                            | ✔️ GitHub synchro   |
+| # | Action | Commande | Résultat |
+|---|--------|----------|----------|
+| V-1 | Contrôle gitlink | `cmd: git submodule status external/activepieces` | ✔️ `d0847488…` |
+| V-2 | Init/update profondeur 1 | `cmd: git submodule update --init --depth 1` | ✔️ |
 
-2-quinquies. Pré-commit *infra* (en cours)
+---
 
-|     |                                          |                                                                                                                                    |                  |
-| --- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| P-1 | **Staging Docker & docs**                | `yaml\ncmd: git add .dockerignore .gitignore Dockerfile docker-compose.yml docs/ Dockerfile.app\npath: C:\\…\\agent-ai\nvenv: off` | 🟡 prêt à commit |
-| P-2 | **Commit « infra: base Docker & docs »** | *(à exécuter juste avant le push final)*                                                                                           | ⏳ *à faire*      |
+### 4. Nettoyage fichiers obsolètes
 
-### ↪️ Prochaine étape (Phase 4A · 3)
+| # | Action | Commande | Résultat |
+|---|--------|----------|----------|
+| N-1 | Suppression README racine | `cmd: git rm README.md && git commit -m "chore: remove obsolete README"` | ✔️ SHA `a294dfb` |
+| N-2 | Push branche locataire | `cmd: git push` | ✔️ |
 
-* **Finaliser le commit infra (P-2).**
-* **Insérer** les services `postgres`, `redis` et `activepieces` dans `docker-compose.yml`.
-* **Lancer** `docker compose pull` puis `docker compose up -d`.
+---
 
-*Quand le commit est poussé ****et**** que le compose est prêt, tapez : ****OK****.*
+### 5. **Ré-alignement Git complet** (09/05/2025)
+
+| # | Action / Décision | Commande YAML | Résultat |
+|---|-------------------|---------------|----------|
+| G-1 | Cherry-pick sous-module sur `main` | `cmd: git cherry-pick 4dd995f` | ✔️ SHA `23893f1` |
+| G-2 | Cherry-pick **infra Docker & docs** | `cmd: git cherry-pick 19b2505` | ✔️ SHA `1e71fc6` |
+| G-3 | Cherry-pick README removal | `cmd: git cherry-pick a294dfb` | ✔️ SHA `0e4a4b8` |
+| G-4 | Cherry-pick docs onboarding & multi-tenant | `cmd: git cherry-pick 40eac5e` | ✔️ SHA `105b760` |
+| G-5 | Push `main` réaligné | `cmd: git push origin main` | GitHub ← `105b760` |
+| G-6 | **Suppression branche locataire prématurée** | `cmd: git branch -D tenant/demo-activepieces`<br>`cmd: git push origin :tenant/demo-activepieces` | ✔️ voie libre |
+| G-7 | Contrôle final | `cmd: git branch -a` | Liste = `* main` |
+
+> **Bilan** : le dépôt est de nouveau conforme à la Vision 360° – aucune branche locataire fantôme.
+
+---
+### 6. **À faire – Pré-commit _infra_ (Docker & docs)**
+
+| # | Action prévue | Commande YAML (à exécuter) | Statut |
+|---|---------------|---------------------------|--------|
+| P-1 | Staging Docker & docs | `cmd: git add .dockerignore .gitignore Dockerfile docker-compose.yml docs/ Dockerfile.app` | ⏳ |
+| P-2 | Commit `"infra: base Docker & docs"` | `cmd: git commit -m "infra: base Docker & docs"` | ⏳ |
+
+---
+
+### 7. **À faire – Mise à jour `docker-compose.yml` + démarrage stack**
+
+| # | Action prévue | Commande YAML (à exécuter) | Statut |
+|---|---------------|---------------------------|--------|
+| I-1 | Ajouter services `postgres`, `redis`, `activepieces-core`, `activepieces-ui` | *(édition manuelle du fichier)* | ⏳ |
+| I-2 | Pull images | `cmd: docker compose pull` | ⏳ |
+| I-3 | Démarrer MVP | `cmd: docker compose up -d traefik phoenix chromadb secret-mcp postgres redis activepieces-core activepieces-ui agent-ai` | ⏳ |
+
+---
+
+### 8. **À faire – Vérifications rapides**
+
+| # | Test prévu | Commande | Statut |
+|---|-----------|----------|--------|
+| V-A | Vérifier header `X-Tenant` (Traefik) | `cmd: curl.exe -I http://ui.demo.localhost | findstr /R "^X-Tenant:"` | ⏳ |
+| V-B | Exécuter flow “Ping → Console” | *(import template + Run once)* | ⏳ |
+
+---
+
+## État actuel
+
+* **Branche :** `main` unique, propre, aucune branche locataire fantôme.  
+* **Sous-module :** `external/activepieces` fixé, profondeur 1.  
+* **Infra Docker :** Traefik, Phoenix, Chroma, Secret-MCP, Agent-AI déjà là ; **Postgres, Redis, ActivePieces** pas encore ajoutés.  
+* **Prochaines actions :** enchaîner les points 6, 7, 8 ci-dessus pour terminer la Phase 4A.
+
+---
