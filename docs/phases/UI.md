@@ -110,6 +110,28 @@ echo "Dashboard : http://localhost:6006"
 Voir `SECURITY_AND_PRIVACY.md` (TLS, rétention logs, Sealed‑Secrets).
 
 ---
+### Onboarding locataire – création automatique de workspace
+
+> *Métaphore éclair : dès que l’utilisateur franchit la porte d’entrée, on lui remet aussitôt les clés de son appartement encore vide.*
+
+1. **Sign-up** ► `POST /onboard/signup`  
+   – Génére le `slug` (kebab-case du `company_name`).
+
+2. **Provisioning instantané**  
+   - **Auth** : crée l’utilisateur + groupe `tenant/<slug>` dans Keycloak.  
+   - **ActivePieces** : `POST /workspaces` (token de service) → workspace nommé `<slug>`.  
+   - **Git** : branche `tenant/<slug>` + dossier `app/flows/<slug>/`.  
+   - **Secrets** : namespace `tenant/<slug>` dans Secret MCP.
+
+3. **Redirection UI** : à la fin du process, l’app renvoie vers l’URL ActivePieces du workspace (`/workspace/<id>/flows`).
+
+4. **Idempotence & rollback**  
+   - Si le même `slug` existe déjà : HTTP 200 + payload existant.  
+   - Si une étape échoue : suppression de toutes les ressources créées (saga).
+
+➡︎ *Voir aussi* : [`docs/overviewinstruction.md`]
+
+
 #### Gestion des clés API utilisateur
 
 Chaque client doit pouvoir ajouter / mettre à jour ses clés (OpenAI, Anthropic…) **sans passer par l’équipe ops**.  

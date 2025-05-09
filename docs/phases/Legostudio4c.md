@@ -22,6 +22,44 @@
 
 ## 2. Architecture cible
 
+### Support multi-tenant : génération de code dans la branche locataire
+
+> *Métaphore éclair : le **traceur de plans** dépose les plans finis directement dans l’appartement du locataire, et jamais dans le hall.*
+
+1. **Déclencheur**  
+   - Webhook ActivePieces `flow.saved` (ou `flow.version.published`) **inclut** l’entête HTTP `X-Tenant-Slug: <slug>` renseigné par le middleware Traefik.  
+   - Si l’entête manque, la requête est rejetée (HTTP 400) pour éviter de polluer `main`.
+
+2. **Pipeline Compiler Service**  
+   | Étape | Action | Chemin |
+   |-------|--------|--------|
+   | ① | Checkout `tenant/<slug>` **en lecture-écriture** | `/srv/app` (venv : on) |
+   | ② | Jinja² → rend `flow_<flowId>.py` + tests | `app/flows/<slug>/` |
+   | ③ | `pytest -q` (fail fast) | `/srv/app` |
+   | ④ | `git add/commit` « feat(flow): build <flowId> » | `/srv/app` |
+   | ⑤ | `git push origin tenant/<slug>` | `/srv/app` |
+
+3. **Garantie d’atomicité**  
+   - En cas d’échec à ③, le commit est annulé (`git reset --hard && git clean -fd`).  
+   - Les rollbacks respectent la stratégie décrite dans `docs/onboarding_flow.md`.
+
+4. **Première exécution (slug bootstrap)**  
+   - Si le répertoire `app/flows/<slug>/` est vide, le service crée également le fichier `__init__.py` + README tenant.  
+   - Le commit initial est « chore(tenant): bootstrap <slug> ».
+
+5. **Idempotence**  
+   - Même `flowId` + même révision → aucun commit ; on log « no-op ».  
+   - Différences détectées (hash Jinja²) → nouveau commit.
+
+6. **Observabilité**  
+   - Span *Phoenix* « compiler.<slug>.<flowId> » (status OK/ERROR).  
+   - Tag `tenant:<slug>` pour filtrage Kibana.
+
+➡︎ *Voir également* :  
+- **UI.md** : section « Onboarding locataire – création automatique de workspace »  
+- **Gitstrategymultitenant.md** : règles de branche et fusion  
+- **docs/overviewinstruction.md
+
 ### 2.1 Gestion Git multi-tenant
 
 * **Branche dédiée par client** : `tenant/<slug>`

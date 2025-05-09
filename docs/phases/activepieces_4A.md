@@ -61,6 +61,52 @@ services:
 
 > *Bonne pratique :* pour d’autres fournisseurs (Anthropic, Mistral, etc.), créer un credential équivalent en changeant simplement le nom.
 
+## 3ter. On-boarding locataire – workspace & branche avant tout Flow
+
+> *Métaphore éclair : l’hôtesse d’accueil remet le **badge** (workspace) et ouvre la **boîte à outils** (branche Git) avant que le locataire n’entre dans l’atelier.*
+
+| # | Étape | Action précise | Fichier / service |
+|---|-------|----------------|-------------------|
+| 1 | **Sign-up** | Formulaire UI ➜ `POST /onboard/signup` (`email`, `company_name`) | `app/api/routes/onboard.py` |
+| 2 | **Provisioning backend** | `onboarding_service.create_full_tenant(slug)` →<br>• Keycloak user + groupe `tenant/<slug>`<br>• ActivePieces `POST /workspaces {name: slug}`<br>• `git checkout -b tenant/<slug>` + dossier `app/flows/<slug>/`<br>• `secret_mcp.create_scope(slug)` | `app/services/…` + `scripts/git_init_tenant.sh` |
+| 3 | **Redirection UI** | Backend répond `302` vers `http://ui.<slug>.localhost/workspace/<id>/flows` (token cookie) | Next.js middleware |
+| 4 | **Idempotence** | Si le `slug` existe déjà → HTTP 200, payload `{workspace_id, slug}` | — |
+| 5 | **Rollback** | Sur erreur → suppression user Keycloak + branche Git + workspace AP | Saga dans `onboarding_service` |
+
+```yaml
+# Extrait docker-compose.override.yml : exposer l’endpoint onboarding
+services:
+  agent-ai:
+    environment:
+      - ENABLE_ONBOARDING=1
+    ports: ["8000:8000"]   # /onboard/signup
+
+
+   
+   Test rapide “nouveau client”
+   cmd: curl.exe -s -X POST http://api.localhost/onboard/signup ^
+      -H "Content-Type: application/json" ^
+      -d "{\"email\":\"bob@example.com\",\"company_name\":\"Bob Corp\"}" | jq
+path: ~
+venv: off
+
+Sortie attendue :
+{
+  "slug": "bob-corp",
+  "workspace_id": "9e1f…",
+  "login_url": "http://ui.bob-corp.localhost/workspace/9e1f…/flows"
+}
+
+Points de vigilance
+Isolation Git – les commits utilisateur restent dans tenant/<slug> ; rappel de la règle multi-tenant .
+
+Header X-Tenant – déjà activé via Traefik middleware (section 5 bis) ; aucune requête sans header en prod activepieces_4A.
+
+Script create_tenant.sh appelé en tâche de fond ; même logique que décrite dans UI.md UIUI.
+
+➡︎ Référence croisée : docs/overviewinstruction.md pour le schéma complet.
+
+
 ---
 
 ## 4. Branding minimal
@@ -217,3 +263,54 @@ Ajouter un job rapide dans `.github/workflows/ci.yml` :
 * Cause : variables d’environnement PHOENIX\_HOST / PHOENIX\_COLLECTOR\_ENDPOINT superflues
 * Solution : suppression des deux variables dans `.env`
 * Vérification : `curl.exe -I http://localhost:6006` → HTTP/1.1 200 OK
+
+## Journal de déploiement – **Phase 4A / ActivePieces**
+
+*Session : 9 mai 2025 – Repo :\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*`agent-ai`*
+
+Modèle calqué sur l’exemple `ActivePieces 4A` : chaque tâche comporte
+• un libellé clair • l’action réalisée • la (ou les) commande(s) exécutée(s) au format YAML.
+
+2\. Clone du code ActivePieces (sous-module)
+
+| 2-1 | **Se placer à la racine du projet**                                                                                                                                                                                                                              | `yaml\ncmd: cd C:\\Users\\Util\\Desktop\\agent-ai\npath: ~\nvenv: off`                                                                                   | ✔️                           |
+| 2-2 | **Tentative clone (URL erronée)**                                                                                                                                                                                                                                | `yaml\ncmd: git submodule add https://github.com/activepieces/activepieces-core.git external/activepieces\npath: C:\\…\\agent-ai\nvenv: off`             | ❌ *« Repository not found »* |
+| 2-3 | **Nettoyage de la tentative ratée**                                                                                                                                                                                                                              | `yaml\ncmd: git submodule deinit -f external/activepieces ; git rm -rf external/activepieces\npath: C:\\…\\agent-ai\nvenv: off`                          | ✔️                           |
+| 2-4 | **Ajout du sous-module (URL correcte)**                                                                                                                                                                                                                          | `yaml\ncmd: git submodule add https://github.com/activepieces/activepieces.git external/activepieces\npath: C:\\…\\agent-ai\nvenv: off`                  | ✔️ clone \~273 Mo            |
+| 2-5 | **Indexation + commit (sur *********************************************************************************************************main********************************************************************************************************* par mégarde)** | `yaml\ncmd: git add .gitmodules external/activepieces && git commit -m \"chore: add ActivePieces GPLv3 as submodule\"\npath: C:\\…\\agent-ai\nvenv: off` | ✔️                           |
+
+### 2-bis. Réorganisation branches & stash
+
+| B-1 | \*\*Sauvegarde WIP (docs & Docker) dans un \*\****stash***                                                                                                                                                          | `yaml\ncmd: git stash push -m \"wip: docs et docker avant réorganisation\"\npath: C:\\…\\agent-ai\nvenv: off`                                                                  | ✔️ stash@{0}               |
+| B-2 | \*\*Création + push branche \*\*\`\`                                                                                                                                                                                | `yaml\ncmd: git branch tenant/demo-activepieces\npath: C:\\…\\agent-ai\nvenv: off`\n`yaml\ncmd: git push -u origin tenant/demo-activepieces\npath: C:\\…\\agent-ai\nvenv: off` | ✔️                         |
+| B-3 | **Alignement de *****************************************************************************************main***************************************************************************************** sur origin** | `yaml\ncmd: git checkout main\npath: C:\\…\\agent-ai\nvenv: off`\n`yaml\ncmd: git reset --hard origin/main\npath: C:\\…\\agent-ai\nvenv: off`                                  | ✔️                         |
+| B-4 | **Retour sur branche de travail + pop stash**                                                                                                                                                                       | `yaml\ncmd: git checkout tenant/demo-activepieces\npath: C:\\…\\agent-ai\nvenv: off`\n`yaml\ncmd: git stash pop\npath: C:\\…\\agent-ai\nvenv: off`                             | ✔️ docs & Docker restaurés |
+
+2-ter. Validation du sous-module
+
+|     |                              |                                                                                           |                             |
+| --- | ---------------------------- | ----------------------------------------------------------------------------------------- | --------------------------- |
+| V-1 | **Contrôle gitlink**         | `yaml\ncmd: git submodule status external/activepieces\npath: C:\\…\\agent-ai\nvenv: off` | ✔️ `d0847488…` (gitlink OK) |
+| V-2 | **Init/Update profondeur 1** | `yaml\ncmd: git submodule update --init --depth 1\npath: C:\\…\\agent-ai\nvenv: off`      | ✔️                          |
+
+2-quater. Nettoyage fichiers obsolètes
+
+|     |                                      |                                                                                                                    |                     |
+| --- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------ | ------------------- |
+| N-1 | **Suppression volontaire du README** | `yaml\ncmd: git rm README.md && git commit -m \"chore: remove obsolete README\"\npath: C:\\…\\agent-ai\nvenv: off` | ✔️ commit `a294dfb` |
+| N-2 | **Push branche mise à jour**         | `yaml\ncmd: git push\npath: C:\\…\\agent-ai\nvenv: off`                                                            | ✔️ GitHub synchro   |
+
+2-quinquies. Pré-commit *infra* (en cours)
+
+|     |                                          |                                                                                                                                    |                  |
+| --- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| P-1 | **Staging Docker & docs**                | `yaml\ncmd: git add .dockerignore .gitignore Dockerfile docker-compose.yml docs/ Dockerfile.app\npath: C:\\…\\agent-ai\nvenv: off` | 🟡 prêt à commit |
+| P-2 | **Commit « infra: base Docker & docs »** | *(à exécuter juste avant le push final)*                                                                                           | ⏳ *à faire*      |
+
+### ↪️ Prochaine étape (Phase 4A · 3)
+
+* **Finaliser le commit infra (P-2).**
+* **Insérer** les services `postgres`, `redis` et `activepieces` dans `docker-compose.yml`.
+* **Lancer** `docker compose pull` puis `docker compose up -d`.
+
+*Quand le commit est poussé ****et**** que le compose est prêt, tapez : ****OK****.*

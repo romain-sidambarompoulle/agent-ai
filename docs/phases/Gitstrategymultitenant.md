@@ -26,6 +26,30 @@ origin/
 * **Branche** par client : `tenant/<slug>`
 * **Convention de tags** : `bld/<slug>/<yyyyMMddHHmmss>-<target>` (ex. `bld/acme/20250508T1420-cloud`)
 
+### Création automatique de la branche locataire à l’on-boarding
+
+> *Métaphore éclair : on crée le **carton de déménagement** dès que le client signe le bail, afin qu’il n’empile pas ses affaires dans le hall.*
+
+1. **Déclencheur** : fin du `POST /onboard/signup` (voir [`docs/overviewinstruction
+2. **Commande Git exécutée côté backend** :  
+   ```bash
+   git checkout -b tenant/<slug> && \
+   mkdir -p app/flows/<slug>/ && \
+   git add app/flows/<slug>/ && \
+   git commit -m "chore(tenant): bootstrap <slug>" && \
+   git push -u origin tenant/<slug>
+Chemin : /srv/app (venv : off – script lancé par subprocess).
+3. Contenu initial de la branche : uniquement la structure vide + README tenant.
+4. Garantie d’idempotence : si tenant/<slug> existe déjà, on retourne un HTTP 200 et on évite tout git push --force.
+5. Règle de fusion :
+
+Les commits restent sur tenant/<slug> tant qu’ils sont spécifiques.
+
+Un cherry-pick ou PR vers main n’est autorisé que pour du code générique (utility, fixture, doc).
+
+Nettoyage : branches de test (tenant/test-*) sont supprimées par le job CI cleanup-tenant-branches.yml après 7 jours d’inactivité.
+
+➡︎ Référence croisée : section « Onboarding locataire – création automatique de workspace » dans UI.md.
 ---
 
 ## 2. Cycle de vie d’un build

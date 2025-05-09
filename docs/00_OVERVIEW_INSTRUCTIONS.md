@@ -13,6 +13,49 @@
 5. **CI “tenant‑guard”** obligatoire – Les pipelines doivent lancer des tests croisés (tenant A vs tenant B) et échouer si un secret ou un artefact en clair traverse la barrière.
 6. **Exceptions documentées** – Toute dérogation à ces règles doit être consignée, le jour même, dans `docs/adr_exceptions.md`, au format indiqué (contexte, cause, décision, plan de retrait).
 ---
+### Onboarding locataire : création de l’espace **avant** tout Flow
+
+> *Métaphore éclair : on bâtit d’abord la cage d’ascenseur avant de meubler les appartements.*
+
+#### 1. Déclencheur UX
+
+| Étape                                                         | Source d’évènement     | Raison                                                                                   |
+| ------------------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------- |
+| **Validation du formulaire Sign‑up** (email + nom de société) | `POST /onboard/signup` | L’utilisateur manifeste une intention claire et durable ; on évite des espaces fantômes. |
+
+#### 2. Pipeline technique (atomique & idempotent)
+
+| Ordre | Couche           | Action                                                | Fichier / service                          |
+| ----- | ---------------- | ----------------------------------------------------- | ------------------------------------------ |
+| ①     | **Auth**         | Créer l’utilisateur + groupe `tenant/<slug>`          | `keycloak_admin.create_user()`             |
+| ②     | **ActivePieces** | Créer workspace vide `name = <slug>`                  | `POST /workspaces` (token service‑account) |
+| ③     | **Git**          | Branche `tenant/<slug>` + dossier `app/flows/<slug>/` | `scripts/git_init_tenant.sh`               |
+| ④     | **Vault MCP**    | Namespace `tenant/<slug>/`                            | `secret_mcp.create_scope()`                |
+| ⑤     | **E‑mail**       | Message de bienvenue avec lien vers l’UI              | Celery → SendGrid                          |
+
+#### 3. Schéma « ascenseur express »
+
+```
+(front Sign‑up) ─► /onboard/signup ─► onboarding_service
+            │                                 │
+            └──────── rollback si erreur ◄────┘
+```
+
+#### 4. Points de vigilance
+
+* **Atomicité** : rollback complet si l’une des sous‑étapes échoue.
+* **Idempotence** : second appel avec le même email → 200 + « déjà créé ».
+* **Sécurité** : endpoint `POST /workspaces` n’est accessible qu’au token interne.
+* **Observabilité** : tracer l’ensemble sous *span* « onboarding » dans Phoenix.
+
+#### 5. Liens croisés
+
+* [UI.md](UI.md) : section *On‑boarding* ➜ renvoi vers ce paragraphe.
+* [GitStrategyMultitenant.md](Gitstrategymultitenant.md) : ajout note « branche créée dès Sign‑up ».
+
+---
+
+> **À faire** : intégrer ce bloc à la fin de *00\_OVERVIEW\_INSTRUCTIONS.md* sous le titre « ### Onboarding locataire ».
 
 
 ## Definition of Done (global)
