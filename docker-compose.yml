@@ -1,5 +1,15 @@
 
 services:
+  langflow:
+    image: langflowai/langflow:1.1.4  
+    container_name: agent-ai-langflow-1
+    ports:
+      - "7860:7860"          # accès local http://localhost:7860
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://phoenix:4318   # télémétrie (optionnel)
+    depends_on:
+      - phoenix
+    networks: [apnet]    
   postgres:
     image: postgres:15-alpine
     restart: unless-stopped
@@ -16,25 +26,30 @@ services:
     volumes:
       - redis_data:/data
     networks: [apnet]
-  activepieces-core:
-    build: external/activepieces/docker/core
-    ports: ["8080:8080"]
+
+  activepieces:
+    image: ghcr.io/activepieces/activepieces:0.39.7   # image officielle OSS
+    restart: unless-stopped
+    networks: [apnet]
+    ports: ["3000:80"]            # UI + API dispos sur http://localhost:3000
     depends_on: [postgres, redis]
     environment:
-      - AP_DB_HOST=postgres
-      - AP_DB_PORT=5432
-      - AP_DB_USERNAME=ap_user
-      - AP_DB_PASSWORD=ap_password
-      - REDIS_HOST=redis
-    env_file: .env
-    networks: [apnet]
-  activepieces-ui:
-    build: external/activepieces/docker/ui
-    ports: ["3000:3000"]
-    environment:
-      - AP_API_URL=http://activepieces-core:8080
-    depends_on: [activepieces-core]
-    networks: [apnet]
+      - AP_EDITION=ee
+      - AP_LICENSE_KEY=dummy
+      - AP_EXECUTION_MODE=SANDBOXED        # ← nouveau
+      - AP_SANDBOX_RUNNER=vm2              # runner JS par défaut
+      - AP_SANDBOX_MEMORY_LIMIT=512        # (optionnel) 512 Mo par run
+      - AP_POSTGRES_HOST=postgres
+      - AP_POSTGRES_PORT=5432
+      - AP_POSTGRES_USERNAME=ap_user
+      - AP_POSTGRES_PASSWORD=ap_password
+      - AP_POSTGRES_DATABASE=activepieces
+      - AP_REDIS_HOST=redis
+      - AP_REDIS_PORT=6379
+      - AP_ENCRYPTION_KEY=${AP_ENCRYPTION_KEY}
+      - AP_JWT_SECRET=${AP_JWT_SECRET}
+      - AP_FRONTEND_URL=http://localhost:3000
+      - AP_OTEL_EXPORTER_OTLP_ENDPOINT=http://phoenix:4318
   phoenix:
     image: arizephoenix/phoenix:latest   
     container_name: phoenix
