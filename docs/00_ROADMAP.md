@@ -1,4 +1,5 @@
 > **Version 2.2 – 8 mai 2025**
+> Boussole pivot LangFlow → ActivePieces intégré ; ajout des sprints front‑end **4D** et **4E** (React‑Flow Builder).
 
 ## Objectifs pédagogiques
 
@@ -15,12 +16,15 @@
 | **1**  | Mémoire & mini RAG                   | Ajouter **ChromaDB** + persistance ; badge concierge                                                    | Phase 0                  | ✅      |
 | **2**  | Orchestration **LangGraph**          | Graphe *think → validate → act* ; tests transitions                                                     | Phase 1                  | ✅      |
 | **3**  | Multi‑agents **CrewAI**              | 3 rôles (analyste, rédacteur, vérificateur) + vote                                                      | Phase 2                  | ✅      |
-| **4A** | **ActivePieces (UI)**                | Conteneur ActivePieces prêt ; déclencheurs front ; tests agents réels via UI                            | Phoenix démarré          | ⏳      |
-| **4B** | Flows manuels + Piece « Hello »      | Configurer **CrewAI/LangGraph** manuellement ; première Piece « Hello » + test webhook build            | 4A                       | ⏳      |
-| **4C** | **Compiler Service (codegen cloud)** | Générer `app/flows/<slug>.py` + runner ; hot‑reload ; **tests CI + suite tenant‑guard (isolation A/B)** | 4B                       | ⏳      |
-| **5**  | **Lego‑studio étendu : dual‑target** | Compiler Service v2 : séparer nœuds *cloud* / *edge* ; générer également `edge_scripts/<slug>.py`       | 4C                       | ⏳      |
-| **6**  | **Edge‑Agent packaging**             | Agent local (Electron/Go) : tunnel sortant sécurisé, auto‑update, exécution Playwright/AutoHotkey       | 5                        | ⏳      |
-| **7**  | **RAG complet**                      | **Llama‑Index** + Chroma ; Pieces RAG ; workflow cloud/edge intégré                                     | Edge‑Agent prêt          | ⏳      |
+| 4A     | Stack **ActivePieces CE** isolée                           | ⏳ En cours     |
+| 4B     | Flows **LangFlow → ActivePieces**                          | ⏳ En cours     |
+| 4C     | **Compiler Service** (codegen Cloud + Edge)                | ⏳ En cours     |
+| 4D     | Scaffold **React‑Flow Builder** (Next.js 14)               | ⏳ En cours     |
+| 4E     | Intégration **API Builder** (/flows & /build)              | 🕓 À planifier |
+| 5      | Lego‑studio dual‑target **Cloud / Desktop**                | 🅿️ Prévu      |
+| 6      | **Sécurité & distribution** (signatures, auto‑update Edge) | 🅿️ Prévu      |
+| 7      | RAG offline & optimisations embeddings           | 🔜 Backlog     |
+
 | **8**  | Guardrails & Robustesse              | Prompt shielding, quotas, retries, monitoring Colang + Phoenix                                          | RAG up                   | ⏳      |
 | **9**  | **LLM locaux**                       | Intégrer **Ollama / llama.cpp** via **LiteLLM** ; bench perf                                            | GPU dispo, guardrails ok | 🅿️    |
 | **10** | POC Secrétaire‑robot                 | **Playwright** + CrewAI sur sandbox clinique                                                            | Phases 4‑9               | 🕓     |
@@ -28,21 +32,24 @@
 | **12** | Packaging Docker Compose             | Bundle tout‑en‑un + docs utilisateur                                                                    | 11                       | 🕓     |
 
 ---
+## Fiches de phase / sprint
 
-## Méta‑procédures
-
-* Chaque phase a son chat dédié (`#S0_setup`, `#S1_memoire`, …).
-* Pour **cocher une tâche** : voir le mémo de commande dans chaque chat.
-* Après achèvement : **journaliser** dans `JOURNAL_2025.md`.
-* Tests toujours dans la branche tenant/<slug> : exécuter, valider et corriger les flows dans l’espace client isolé afin d’éviter toute collision avec main.
+* **activepieces\_4A.md** – Stack isolée ActivePieces.
+* **flows4B.md** – Import LangFlow → AP.
+* **Legostudio4c.md** – Compiler Service.
+* **builder\_front\_4D.md** – Scaffold Front Builder.
+* **builder\_front\_4E.md** – Intégration API Builder.
+* **Legostudio5.md** – Dual‑target Cloud / Desktop.
+* **Edgeagent6.md** – Runner Edge.
 
 ---
 
-## 📝 Changelog
+## 📝 Changelog
 
-| Version  | Date       | Motif                                                                                                     |
-| -------- | ---------- | --------------------------------------------------------------------------------------------------------- |
-| **v2.2** | 2025‑05‑08 | Ajout phases **5 Lego‑studio dual‑target** et **6 Edge‑Agent packaging** ; décalage des phases suivantes. |
-| **v2.1** | 2025‑05‑08 | Ajout 4C Compiler Service (codegen cloud).                                                                |
-| **v2**   | 2025‑05‑07 | Réécriture complète : découpe 4A/4B, ajout phases 5‑10.                                                   |
-| **v1**   | 2025‑04‑29 | Roadmap initiale.                                                                                         |
+| Version  | Date       | Motif                                                                               |
+| -------- | ---------- | ----------------------------------------------------------------------------------- |
+| **v3.1** | 2025-05-10 | Ajout sprints 4D & 4E (React‑Flow Builder), statuts mis à jour, bandeau version.    |
+| v3.0     | 2025-05-10 | Roadmap simplifiée : retrait Objectifs/Dépendances, regroupement « Fondations IA ». |
+| v2.1     | 2025‑05‑08 | Ajout phases 4A‑6 détaillées.                                                       |
+| v2       | 2025‑05‑07 | Première table structurée.                                                          |
+| v1       | 2025‑05‑04 | Esquisse initiale.                                                                  |

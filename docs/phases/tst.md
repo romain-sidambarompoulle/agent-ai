@@ -1,53 +1,75 @@
-## Texte d’ouverture – « Preambule de Vision »
-*(à coller au début de chaque nouveau chat pour aligner humains & IA)*
+# Vision préambule — Une stack CE par client + Edge‑Agent local
+
+> **Version 1.2 – 10 mai 2025**
+> Aligné sur *Boussole d’état – 10 mai 2025* (pivot « LangFlow → React‑Flow Builder »)
+> 🧱 **1 stack = 1 client** & 🦾 **1 Edge‑Agent par PC client**
 
 ---
 
-### 1. Vision 360 °
+## 1. Vision (5 points clés)
 
-1. **Empiler du 100 % open-source** : LangChain / CrewAI / LangGraph, observabilité Phoenix, gateway LiteLLM, vecteurs Chroma, vault Secret MCP, etc.  
-2. **Cloud d’abord, Docker local ensuite** : même stack portable ; on débranche le convoyeur du cloud pour le poser sur le poste client.  
-3. **Isolation multi-tenant stricte** : chaque client vit dans son workspace ActivePieces, sa branche Git `tenant/<slug>`, et son coffre secrets dédié.  
-4. **Compiler Service auto-codegen** : à chaque sauvegarde d’un flow, Jinja² génère le runner Python dans la branche du locataire.  
-5. **Tests & évolutions**  
-   - **Workflows** : toute expérimentation passe dans une *branche locataire simulée* `tenant/<slug-test>`, jamais sur `main`.  
-   - **Composants communs** (logo, nouveaux agents, scripts partagés…) : développement dans une branche `feature/common-<topic>` puis *Pull Request* → `main`.  
-6. **Pédagogie GPS** : commandes YAML + explication, puis on attend le « OK » avant l’étape suivante.  
-
-*Métaphore globale : nous construisons un immeuble LEGO. `main` est la charpente ; chaque locataire dispose d’un appartement séparé que l’on meuble à la demande.*
+1. **Open‑source only** : tous les composants (ActivePieces CE 0.39, LangFlow, React‑Flow Builder, CrewAI, Edge‑Launcher, etc.) sont sous licence permissive.
+2. **Déploiement cloud → Docker local** : chaque client reçoit une *maison* (`compose/<slug>`) clonable sur son infrastructure.
+3. **Isolation naturelle** : dossier `compose/<slug>`, branche Git `tenant/<slug>`, vault secrets dédié ; aucun header `X‑Tenant` requis, la traçabilité passe par `stack_port:31<idx>`.
+4. **Compiler dual‑target** : à chaque sauvegarde de flow (LangFlow **ou** React‑Flow Builder), il produit : ① un *Cloud Agent* Python (LangServe) ; ② un *Edge‑Agent* (bundle desktop signé) capable de manipuler fichiers & apps locales.
+5. **Simplicité GPS** : pour toute opération, fournir *maximum deux commandes* (chemin & venv précisés) avant de demander confirmation.
 
 ---
 
-### 2. Règles d’or (toujours vraies)
+## 2. Règles d’or
 
-| # | Règle | Image mentale |
-|---|-------|---------------|
-| 1 | **On-boarding locataire** = badge + cage d’ascenseur **avant** tout flow. | On remet les clés dès que la valise franchit l’entrée. |
-| 2 | **Jamais de code spécifique dans `main`** ; uniquement l’ossature **et les composants communs validés**. | On n’entrepose pas de canapé privé dans le hall. |
-| 3 | **Webhook `flow.saved`** pousse du code **dans la branche locataire** et exécute les tests. | Le traceur de plans dépose les plans dans l’appartement, pas ailleurs. |
-| 4 | **Idempotence & rollback** partout : relancer un même on-boarding ne casse rien ; tout échec annule les ressources créées. | Un bouton « annuler » géant sur chaque machine. |
-| 5 | **Pas de sur-anticipation** : on donne une seule commande indispensable, puis on attend la confirmation. | GPS : « Tournez à gauche, j’attends. » |
-
----
-
-### 3. Checklist rapide avant toute tâche
-
-- [ ] Le **slug** du locataire est-il clairement identifié ?  
-- [ ] Travaillons-nous bien dans la branche `tenant/<slug>` (ou `feature/common-<topic>` si besoin) ?  
-- [ ] Les secrets sont-ils rangés dans `tenant/<slug>` du vault MCP ?  
-- [ ] Les tests passent-ils localement **avant** le push ?  
-- [ ] Avons-nous expliqué la prochaine commande en YAML + chemin + venv on/off ?  
+| # | Règle                          | Application concrète                                                                       |
+| - | ------------------------------ | ------------------------------------------------------------------------------------------ |
+| 1 | **On‑boarding locataire**      | Script `create_tenant.ps1 <slug>` crée la stack, la branche Git, le PAT et le vault scope. |
+| 2 | **Pas de hard‑code**           | Secrets dans Vault MCP ; jamais dans `.env` global.                                        |
+| 3 | **Observabilité systématique** | Phoenix span taggés `stack_port` (+ `agent_type`).                                         |
+| 4 | **Rollback prêt**              | Toute insertion de hack temporaire = ADR + date retrait.                                   |
 
 ---
 
-### 4. Références-clés
+## 3. Checklist rapide avant sprint
 
-- `docs/00_OVERVIEW_INSTRUCTIONS.md` – cage d’ascenseur (signup ➜ workspace ➜ Git ➜ secrets)  
-- `UI.md` – détails front & redirections  
-- `Gitstrategymultitenant.md` – règles de branches et nettoyage  
-- `activepieces_4A.md` – middleware `X-Tenant` & isolation HTTP  
-- `Compiler Service 4C` – pipeline de génération et tests  
+* [ ] Stack `compose/<slug>` générée ?
+* [ ] Branche `tenant/<slug>` poussée ?
+* [ ] Credentials ajoutés via UI ?
+* [ ] Phoenix collector actif ?
+* [ ] Edge‑Launcher installé sur poste client (si phase 6 lancée) ?
 
 ---
 
-**À retenir** : *Toute nouvelle action commence par vérifier le locataire, la branche et le coffre-fort. Le reste n’est qu’assemblage de briques LEGO.*  
+## 4. Références‑clés
+
+* [00\_OVERVIEW\_INSTRUCTIONS.md](00_OVERVIEW_INSTRUCTIONS.md) — Contraintes invariantes.
+* [UI.md](UI.md) v 2.1 — Image CE fusionnée.
+* [activepieces\_4A.md](activepieces_4A.md) — Stack CE isolée.
+* [Legostudio4c.md](Legostudio4c.md) — Compiler Service stack isolée.
+* [Gitstrategy\_par\_client.md](Gitstrategy_par_client.md) — Branches & quotas.
+* [Legostudio5.md](Legostudio5.md) v 5.2 — Dual‑target Cloud / Desktop.
+* [Edgeagent6.md](Edgeagent6.md) v 6.2 — Installation Edge‑Agent.
+* **Boussole 10‑05‑2025** — Source de vérité architecture.
+
+---
+
+## 5. Métaphore finale
+
+> Imagine un **lotissement LEGO** : chaque client reçoit sa propre maison préfabriquée (stack CE) et son **robot de bureau** personnel (Edge‑Agent) pour bricoler à l’intérieur. Pas de couloir commun, aucune clé passe‑partout : la sécurité et la tranquillité sont acquises.
+
+---
+
+## 🔗 Référence centrale
+
+Pour les détails complets de l’architecture, consulter **Boussole d’état – 10 mai 2025** (`docs/boussole_2025-05-10.md`).
+
+---
+
+## 📝 Changelog
+
+| Version  | Date       | Motif                                                                                                |
+| -------- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| **v1.2** | 2025‑05‑10 | Suppression de la copie intégrale de la Boussole ; ajout lien de référence et alignement React‑Flow. |
+| v1.1     | 2025‑05‑10 | Pivot Scénario B : suppression workspace & X‑Tenant, ajout Edge‑Agent, métaphore lotissement.        |
+| v1       | 2025‑05‑06 | Préambule de Vision initial (multi‑tenant).                                                          |
+
+
+
+

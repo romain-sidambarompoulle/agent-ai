@@ -1,148 +1,122 @@
-# Stratégie Git multi‑tenant (à partir de la phase 4C)
+# Stratégie Git par client
 
-> **But :** garantir traçabilité, isolation client et CI fluide quand des centaines de clients créent des flows en parallèle.
+> **Version 3.2 – 10 mai 2025**
+> Aligné sur *Pivot LangFlow → ActivePieces* + *Scénario B : 1 stack ActivePieces CE cloud + Edge‑Agent local*.
+> **Chaîne complète** : **LangFlow** (design) ➜ **ActivePieces** (`flow.saved`) ➜ **Compiler** ➜ *Cloud Agent* & *Edge‑Agent*.
+
+Chaque **client** dispose toujours de sa branche Git dédiée `tenant/<slug>`, garantissant isolation et audit traçable des artefacts (flows, agents, bundles desktop) — **source unique** = Flow JSON **exporté depuis LangFlow puis importé** dans ActivePieces.
 
 ---
 
-## 0. Pourquoi cette stratégie ?
+## 0. Pourquoi cette stratégie ?
 
-* **Traçabilité complète :** chaque build (runner cloud, bundle edge) est historisé.
-* **Isolation RGPD :** aucune fuite de code ou de données entre clients.
-* **Performance CI :** on ne teste que ce qui change.
-* **Rollback instantané** et audit facile.
+* Centraliser le code généré **à partir des flows dessinés dans LangFlow**.
+* Éviter collisions de code et de secrets entre clients.
+* Simplifier les revues (diff confinés à une branche).
+* Purger facilement les artefacts grâce aux tags `bld/<slug>/<ts>/<target>`.
+* Offrir un audit clair (spans OTEL taggés `stack_port:31<idx>` et `agent_type`).
 
 ---
 
 ## 1. Organisation du dépôt
 
 ```
-origin/
-├── core/                  ← outils partagés, templates Jinja
-├── tenant/acme/           ← flows & runners du client Acme
-├── tenant/zenith/         ← idem pour Zenith
-└── tenant/_archive/       ← anciens clients (purge partielle)
+monorepo/
+ ├── main/                     # Ossature commune (Pieces, scripts, CI)
+ ├── tenant/
+ │    ├── acme-inc/            # Branche acme-inc (= slug)
+ │    │    ├── agent-ai/acme-inc/      # Cloud Agents (Python)
+ │    │    ├── desktop/acme-inc/       # Edge bundles (.zip/.exe)
+ │    │    ├── app/flows/acme-inc/     # Flows JSON & schema (export LangFlow)
+ │    │    └── compose/acme-inc/       # Stack Docker isolée
+ │    └── beta-corp/
+ │         └── …
 ```
 
-* **Branche** par client : `tenant/<slug>`
-* **Convention de tags** : `bld/<slug>/<yyyyMMddHHmmss>-<target>` (ex. `bld/acme/20250508T1420-cloud`)
+> 📌 **Création automatique** : le script `create_tenant.ps1 <slug>` (Phase 4A) crée le dossier `compose/<slug>`, initialise la branche `tenant/<slug>`, pousse le commit **chore(tenant): bootstrap** et installe le *hook* pré‑commit.
 
-### Création automatique de la branche locataire à l’on-boarding
-
-> *Métaphore éclair : on crée le **carton de déménagement** dès que le client signe le bail, afin qu’il n’empile pas ses affaires dans le hall.*
-
-1. **Déclencheur** : fin du `POST /onboard/signup` (voir [`docs/overviewinstruction
-2. **Commande Git exécutée côté backend** :  
-   ```bash
-   git checkout -b tenant/<slug> && \
-   mkdir -p app/flows/<slug>/ && \
-   git add app/flows/<slug>/ && \
-   git commit -m "chore(tenant): bootstrap <slug>" && \
-   git push -u origin tenant/<slug>
-Chemin : /srv/app (venv : off – script lancé par subprocess).
-3. Contenu initial de la branche : uniquement la structure vide + README tenant.
-4. Garantie d’idempotence : si tenant/<slug> existe déjà, on retourne un HTTP 200 et on évite tout git push --force.
-5. Règle de fusion :
-
-Les commits restent sur tenant/<slug> tant qu’ils sont spécifiques.
-
-Un cherry-pick ou PR vers main n’est autorisé que pour du code générique (utility, fixture, doc).
-
-Nettoyage : branches de test (tenant/test-*) sont supprimées par le job CI cleanup-tenant-branches.yml après 7 jours d’inactivité.
-
-➡︎ Référence croisée : section « Onboarding locataire – création automatique de workspace » dans UI.md.
 ---
 
 ## 2. Cycle de vie d’un build
 
-| Étape | Acteur           | Action                                                                                    |
-| ----- | ---------------- | ----------------------------------------------------------------------------------------- |
-| 1     | ActivePieces     | Envoie JSON à `/build` avec en‑tête `X‑Tenant: acme`                                      |
-| 2     | Compiler Service | Génère runner cloud (et/ou bundle edge)                                                   |
-| 3     | Git push         | `git checkout tenant/acme && git add . && git commit -m "build: …" && git tag bld/acme/…` |
-| 4     | CI GitHub        | Déclenchée par `paths: tenant/acme/**` ; lint + tests                                     |
-| 5     | Phoenix          | Span `build.acme.success` ou `build.acme.failed`                                          |
+| Étape | Acteur                                          | Action                                | Trace OTEL                             |
+| ----- | ----------------------------------------------- | ------------------------------------- | -------------------------------------- |
+| 0     | **LangFlow**                                    | Export JSON `flow_<id>.json`          | *(hors stack)*                         |
+| 1     | **Webhook** `flow.saved` (stack port 31<idx>)   | Appelle `/build` sans header X‑Tenant | span `build.received` tag `stack_port` |
+| 2     | **Compiler Service**                            | Jinja → rend *cloud* et/ou *desktop*  | span `build.render` tag `agent_type`   |
+| 3     | Tests (`pytest`, lint, antivirus)               | Fail‑fast                             | span `build.test` status ERROR/OK      |
+| 4     | `git add/commit --tag bld/<slug>/<ts>/<target>` | Branch `tenant/<slug>`                | span `build.commit`                    |
+| 5     | `git push origin tenant/<slug>`                 | PAT déjà en secret Vault              | span `build.push`                      |
+| 6     | Reload LangServe / notify Edge‑Launcher         | gRPC / HTTP                           | span `build.deploy`                    |
+
+*Header **X‑Tenant** : **facultatif (legacy only)** — la provenance est déduite du port / slug d’environnement.*
 
 ---
 
 ## 3. Quotas & nettoyage
 
-* **Quota :** 100 builds / 24 h / tenant (sinon HTTP 429).
-* **Purge tags > 30 j :** script cron (voir plus bas).
-* **GC hebdomadaire :** `git gc --prune=30.days.ago --aggressive`.
-
-```yaml
-cmd: git for-each-ref --format='%(refname:short) %(creatordate:iso)' refs/tags/bld/acme \
-     | awk '$2 < "$(date -d "30 days ago" +%Y-%m-%d)" {print $1}' \
-     | xargs -r git tag -d
-path: /srv/repos
-venv: off
-```
+* **Quota** : 100 builds / 24 h **par client et par cible** (cloud **et** edge).
+* **Tag rejet** : compiler log `build.reject.quota` avec tags `stack_port` + `agent_type`.
+* **Purge** : tâche hebdo `purge_build_tags.ps1` supprime les tags > 30 jours et exécute `git gc`.
 
 ---
 
-## 4. CI sélective (extrait `ci.yml`)
+## 4. CI sélective
 
 ```yaml
 on:
   push:
-    branches: [ "tenant/**" ]
-    paths: [ "tenant/**" ]
+    branches:
+      - 'tenant/**'
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  tests:
     if: startsWith(github.ref, 'refs/heads/tenant/')
     steps:
       - uses: actions/checkout@v4
-      - name: Run pytest smoke
-        run: pytest -q tests/smoke
+      - run: pip install -r requirements.txt
+      - run: pytest -q
 ```
+
+Le pipeline **ignore** les commits sur `main` sauf pour mises à jour communes.
 
 ---
 
-## 5. Implémentation côté Compiler (pseudo‑code)
+## 5. Implémentation côté Compiler
 
 ```python
-tenant = headers["X-Tenant"]
-branch = f"tenant/{tenant}"
-with git.Repo(".") as repo:
-    if branch not in repo.branches:
-        repo.git.checkout('-b', branch, 'core/main')
-    else:
-        repo.git.checkout(branch)
-    # écrire fichiers …
-    repo.index.add([...])
-    repo.index.commit(f"build: {slug} v{ts}")
-    repo.git.tag(f"bld/{tenant}/{ts}-{target}")
-    origin.push(branch, tags=True)
+slug = os.environ["TENANT_SLUG"]  # injecté par docker‑compose
+agent_targets = os.getenv("TARGETS", "cloud,edge").split(",")
+
+# Flow provient de LangFlow, importé dans ActivePieces (folder app/flows/<slug>)
+flow_path = Path(f"app/flows/{slug}/{flow_id}.json")
+
+if "edge" in agent_targets:
+    edge_out = Path(f"desktop/{slug}/edge_{ver}.zip")
+    render_edge_bundle(flow_path, edge_out)
+
+cloud_out = Path(f"agent-ai/{slug}/{flow_id}.py")
+render_cloud_agent(flow_path, cloud_out)
 ```
 
----
-
-## 6. Vérifications dans l’Edge‑Agent (phase 6)
-
-* Vérifier existence branche (`HEAD /branches/tenant/<slug>`).
-* Télécharger `manifest.json` depuis la branche tenant ; comparer `sha256`.
-* Pull uniquement la branche tenant ; jamais `core`.
+> Le dossier `desktop/<slug>/` est créé à la volée si nécessaire.
 
 ---
 
-## 7. Évolution possible
+## 6. Vérifications Edge-Agent
 
-| Volume builds               | Option                                  |
-| --------------------------- | --------------------------------------- |
-| < 10 000 /jour total        | **Monorépo** (présent)                  |
-| > 10 000 builds/jour/tenant | GitHub App → repo privé par client      |
-| Compliance forte            | Dépôt chiffré ou stockage S3 + manifest |
+1. Vérifier l’existence de la branche `tenant/<slug>` via GitHub API.
+2. Contrôler la présence du bundle `.zip` dans `desktop/<slug>/`.
+3. S’assurer que le Manifest inclut `cpu_arch` conforme au poste du client.
 
 ---
 
-## 8. Résumé pas‑à‑pas (TL;DR)
+## 📝 Changelog
 
-1. **Créer branche** `tenant/<slug>` dès la signature du contrat.
-2. **Configurer token PAT** scope =`repo:tenant/<slug>` dans Secrets GitHub.
-3. **Modifier Compiler Service** pour push/commit/tag sur cette branche.
-4. **Mettre en place CI sélective** et script de purge tags.
-5. **Edge‑Agent** : vérifier branche + manifest avant d’exécuter.
-
-Ainsi, tu garantis isolement, audit et performance dès la première build client.
+| Version  | Date       | Motif                                                                                                                                         |
+| -------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v3.2** | 2025-05-10 | Ajout référence LangFlow → ActivePieces ; étape 0 du cycle de vie ; précision `app/flows/<slug>` export LangFlow ; cross‑link create\_tenant. |
+| v3.1     | 2025-05-10 | Pivot Scénario B : suppression header X‑Tenant, déclencheur `create_tenant.ps1`, tags `stack_port` & `agent_type`, dual‑target cloud/edge.    |
+| v3       | 2025-05-07 | Ajout quotas & purge tags.                                                                                                                    |
+| v2       | 2025-05-05 | Branches tenant/<slug>, tableau cycle de vie.                                                                                                 |
+| v1       | 2025-05-03 | Stratégie multi‑tenant initiale.                                                                                                              |

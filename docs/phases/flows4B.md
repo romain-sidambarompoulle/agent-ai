@@ -1,170 +1,106 @@
-# Phase 4B — Flows manuels + Piece « Hello »
+# Sprint 4B — Premier flow « Hello-Agent »
 
-> **Objectif du sprint :** valider l’aller‑retour *UI ➜ backend* en créant **manuellement** un premier flow et une Piece « Hello World ». À la fin, cliquer *Run once* dans l’UI déclenche notre agent IA (cloud) et écrit un log dans Phoenix. Le stub `/build` est appelé, mais sans générer de code (ce sera la phase 4C).
-
----
-
-## 1. Pré‑requis (hérités de 4A)
-
-| Élément                   | Vérification rapide                            | Cmd YAML                             |
-| ------------------------- | ---------------------------------------------- | ------------------------------------ |
-| ActivePieces UI up        | Accès `http://localhost/ui`                    | —                                    |
-| Branches *tenant* créées  | `tenant/acme` existe                           | `cmd: git branch --list tenant/acme` |
-| Stub `/build` répond 200  | `curl -X POST http://compiler:9000/build/stub` | —                                    |
-| Phoenix collector running | Span `ap.healthz` visible                      | —                                    |
+> **Version 2.3 – 10 mai 2025**
+> Aligné sur *Pivot LangFlow → ActivePieces* (React-Flow Builder arrivera au sprint 5).
+> 🏗️ *Métaphore* : on **dessine** le circuit dans l’atelier **LangFlow**, puis on **branche** le tableau électrique dans la maison ActivePieces.
 
 ---
 
-## 2. Créer le dossier templates
+## 1. Pré‑requis
+
+| Élément           | Valeur / URL                                                    |
+| ----------------- | --------------------------------------------------------------- |
+| UI ActivePieces   | `http://localhost:31<idx>` **ou** `http://ui.<slug>.domain.tld` |
+| Atelier LangFlow  | `http://localhost:78<idx>` (interne DevOps)                     |
+| Fichier d’exemple | `templates/hello_agent.flow.json` (exporté depuis LangFlow)     |
+
+---
+
+## 2. Export depuis LangFlow puis import dans ActivePieces
+
+1. Dans **LangFlow**, ouvrez le projet **« Hello‑Agent »** → **Export JSON**.
+2. Copiez le fichier exporté dans `compose/<slug>/external/activepieces/templates`.
 
 ```yaml
-cmd: mkdir -p templates && echo {} > templates/README.md
-path: repo
-venv: off
+- cmd: ap import --file templates/hello_agent.flow.json
+  path: C:\projets\agent-ai\compose\<slug>\external\activepieces
+  venv: off
 ```
 
-> *Pourquoi :* regrouper tous les exemples JSON et pouvoir les versionner.
+Le flow apparaît aussitôt dans l’UI ActivePieces ; déclenchez‑le pour vérifier la réponse de l’agent IA.
 
 ---
 
-## 3. Flow « Hello World » (JSON minimal)
-
-```json
-{
-  "name": "hello_world_flow",
-  "version": "0.1.0",
-  "nodes": [
-    {
-      "id": "trigger1",
-      "type": "httpTrigger",
-      "method": "POST",
-      "url": "/hello"
-    },
-    {
-      "id": "step1",
-      "type": "runScript",
-      "language": "python",
-      "inline": "print(\"Hello from ActivePieces!\")"
-    }
-  ],
-  "edges": [
-    { "from": "trigger1", "to": "step1" }
-  ]
-}
-```
-
-Enregistrer sous : `templates/hello_world.flow.json`.
-
----
-
-## 4. Importer le flow dans l’UI
+## 3. Build de l’image ActivePieces (optionnel)
 
 ```yaml
-cmd: ap import --file templates/hello_world.flow.json --replace true
-path: external/activepieces
-venv: off
+- cmd: docker compose build activepieces
+  path: C:\projets\agent-ai\compose\<slug>
+  venv: off
 ```
 
-> Vérifier dans l’UI : `hello_world_flow` apparaît dans la liste.
+*(Re‑build uniquement après ajout ou mise à jour d’une **Piece**.)*
 
 ---
 
-## 5. Créer la Piece « Hello »
+## 4. Lancement du flow
 
-1. **Structure :** `external/activepieces/packages/community/piece-hello/`
-2. `piece.json`
-
-   ```json
-   {
-     "name": "hello",
-     "displayName": "Say Hello",
-     "description": "Renvoie Hello <name>",
-     "version": "0.1.0",
-     "type": "action",
-     "props": {
-       "name": {"type": "string", "required": true}
-     }
-   }
-   ```
-3. `index.ts`
-
-   ```ts
-   import { createAction } from '@activepieces/pieces';
-   export const hello = createAction({
-     name: 'hello',
-     async run(ctx) {
-       const name = ctx.propsValue['name'];
-       return `Hello ${name}`;
-     },
-   });
-   ```
-4. Re‑build :
-
-   ```yaml
-   cmd: docker compose build activepieces-ui activepieces-core
-   path: repo
-   venv: off
-   ```
+Dans l’UI ActivePieces, cliquez sur **Test** ; vérifiez que **Phoenix** reçoit les spans OTEL, puis consultez la réponse de l’agent IA.
 
 ---
 
-## 6. Configurer le stub `/build`
+## 5. Stub `/build` (CI)
 
-Dans ActivePieces, **Settings → Webhooks** : ajouter :
+Exemple d’appel depuis PowerShell :
 
-```
-POST http://compiler:9000/build/stub
-Headers:  X-Tenant: acme
-          X-Api-Key: ${{AP_BUILD_SECRET}}
+```powershell
+curl.exe -s -X POST "http://localhost:31<idx>/build" ^
+  -H "X-Api-Key: $env:AP_KEY" ^
+  -H "Content-Type: application/json" ^
+  -d '{"flowId":"hello_agent"}' | ConvertFrom-Json
 ```
 
-> *Pourquoi :* simuler l’appel pour préparer 4C.
+*(Header **X‑Tenant** désormais facultatif ; laissez‑le vide sauf compatibilité ascendante.)*
 
 ---
 
-## 7. Exécuter et vérifier
+## 6. Check‑list fin de sprint 4B
 
-1. Dans l’UI, créer un nouveau flow :
-   *Trigger* = HTTP `/hello`
-   *Action* = Piece « Say Hello » (`name = "World"`).
-2. **Run once**.
-3. Vérifier :
-
-   * Console container `activepieces-core` affiche *Hello World*.
-   * Phoenix → `flow.hello_world_flow` span success.
-   * Conteneur `compiler` reçoit POST `/build/stub`.
+* [ ] Flow **exporté depuis LangFlow** → importé dans UI `compose/<slug>`
+* [ ] Credentials ajoutés (**X-Api-Key**)
+* [ ] Test UI **OK**, traces Phoenix visibles
+* [ ] Pipeline CI **/build** vert
 
 ---
 
-## 8. Checklist de sortie sprint 4B
+## 7. Préparer la phase 4C
 
-* [ ] Flow JSON importé et exécutable.
-* [ ] Piece « Hello » visible & fonctionnelle.
-* [ ] Stub `/build` appelé avec `X-Tenant` correct.
-* [ ] Span Phoenix valide.
-* [ ] Docs rapides : `docs/hello_piece.md`.
+| Action                                           | Pourquoi                                       | Responsable |
+| ------------------------------------------------ | ---------------------------------------------- | ----------- |
+| Finaliser `FlowSchema` JSON                      | Le **compiler** aura besoin d’un schema stable | Backend     |
+| Converter stub `/build` → logique réelle FastAPI | Phase 4C active la génération de code          | Backend     |
+| Créer dossier `compiler/templates/`              | Stocker `flow.py.j2`, `runner.py.j2`           | Dev         |
+| Provisionner PAT Git *tenant/acme*               | Push branche dans 4C                           | Dev Ops     |
+| Activer Phoenix tracer dans `activepieces-core`  | Spans build                                    | Dev         |
+| Script CLI `create_tenant.ps1` opérationnel      | Branche Git, PAT, secrets MCP, bucket MinIO    | Dev Ops     |
 
----
-
-## 9. Préparer la phase 4C
-
-| Action                                           | Pourquoi                                | Responsable |
-| ------------------------------------------------ | --------------------------------------- | ----------- |
-| Finaliser `FlowSchema` JSON                      | Compiler aura besoin d’un schema stable | Backend     |
-| Convertir stub `/build` → logique réelle FastAPI | Phase 4C active la génération code      | Backend     |
-| Créer dossier `compiler/templates/`              | Stocker `flow.py.j2`, `runner.py.j2`    | Dev         |
-| Provisionner PAT Git *tenant/acme*               | push branche dans 4C                    | Dev Ops     |
-| Activer Phoenix tracer dans `activepieces-core`  | spans build                             | Dev         |
-- Script CLI **`create_tenant.sh`** opérationnel (branche Git, PAT, secrets MCP, bucket MinIO).
----
-
-## 10. Timeline indicative (1 jour)
-
-| Matin                       | Après‑midi                      |
-| --------------------------- | ------------------------------- |
-| Import flow JSON, test HTTP | Créer Piece Hello + re‑build UI |
-| Configurer stub `/build`    | Exécuter, vérifier spans + docs |
+> 🔜 **Sprint 4C** correspond au document **LegoStudio4C.md** : il introduira la couche *compiler* et les webhooks.
 
 ---
 
-> *Image mentale* : dans ce sprint, on **pose la première brique LEGO** (Hello World) et on teste que la sonnette (webhook) fonctionne. Le chantier est prêt à accueillir la grosse machine d’imprimerie (Compiler 4C) au sprint suivant.
+## 8. Timeline indicative (1 jour)
+
+| Matin                                     | Après‑midi                          |
+| ----------------------------------------- | ----------------------------------- |
+| Import flow JSON, test HTTP               | Créer Piece « Hello » + re‑build UI |
+| Configurer stub `/build` + vérifier spans | Docs, screenshots, merge PR         |
+
+---
+
+## 📝 Changelog
+
+| Version  | Date       | Motif                                                                                                                |
+| -------- | ---------- | -------------------------------------------------------------------------------------------------------------------- |
+| **v2.3** | 2025-05-10 | Ajout sections build image, lancement flow, stub `/build`, check‑list & timeline complètes ; lien vers LegoStudio4C. |
+| v2.2     | 2025-05-10 | Procédure LangFlow → ActivePieces ; pré‑requis LangFlow.                                                             |
+| v2.1     | 2025-05-10 | Pivot Scénario B : chemins `compose/<slug>`, build unique ActivePieces, suppression header X‑Tenant obligatoire.     |

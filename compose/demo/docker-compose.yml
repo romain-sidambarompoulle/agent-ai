@@ -28,7 +28,7 @@ services:
     networks: [apnet]
 
   activepieces:
-    image: ghcr.io/activepieces/activepieces:0.39.7   # image officielle OSS
+    image: ghcr.io/activepieces/activepieces:0.39.7
     restart: unless-stopped
     networks: [apnet]
     ports: ["3000:80"]            # UI + API dispos sur http://localhost:3000

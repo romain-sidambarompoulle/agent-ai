@@ -1,22 +1,23 @@
-# INFO_STACK_AGENT.md
+# INFO\_STACK\_AGENT.md
 
-> **Version 2 – 7 mai 2025**
->
-> Ce manuel recense – sans doublons avec la Roadmap ou le Journal – tout ce qu’il faut savoir pour **concevoir, câbler et vendre** des agents IA (ou scripts) basés sur nos stacks open‑source. Il sert de **boîte à idées** pour futurs workflows et d’index rapide des outils à disposition.
+> **Version 2.2 – 10 mai 2025**
+> Aligné sur *Boussole d’état – 10 mai 2025* (pivot « LangFlow → React‑Flow Builder », Scénario B : 1 stack ActivePieces CE par client)
+> 🔗 Référence centrale : `docs/boussole_2025-05-10.md`
 
 ---
 
 ## 📑 Sommaire
 
-1. [Objet du fichier](#1-objet)
-2. [Stack open‑source de référence](#2-stack)
-3. [Modèles & Protocoles](#3-modeles)
-4. [Zones d’automatisation](#4-zones)
-5. [Bibliothèque de scénarios](#5-bibli)
-6. [Model Context Protocol (MCP) : guide & exemples](#6-mcp)
-7. [Catalogue 25 outils LangChain](#7-catalogue)
-8. [Scénarios réels détaillés](#8-scenarios)
-9. [Changelog](#9-changelog)
+1. [Objet du fichier](#1️⃣-objet-du-fichier)
+2. [Stack open‑source de référence](#2️⃣-stack-open‑source-de-référence)
+2.1 [Compose client & UI Flows](#21-compose-client--ui-flows)
+3. [Modèles & Protocoles](#3️⃣-modèles--protocoles)
+4. [Zones d’automatisation](#4️⃣-zones-d’automatisation--types-d’actions)
+5. [Bibliothèque de scénarios](#5️⃣-bibliothèque-de-scénarios-concrets)
+6. [Model Context Protocol (MCP)](#6️⃣-model-context-protocol-mcp--guide-rapide)
+7. [Catalogue 25 outils LangChain](#7️⃣-catalogue-détaillé-de-25-outils-langchain)
+8. [Scénarios réels détaillés](#8️⃣-scénarios-réels-détaillés)
+9. [Changelog](#9️⃣-changelog)
 
 ---
 
@@ -24,22 +25,28 @@
 
 * Donner **un panorama unique** des briques techniques utilisables par nos agents.
 * Rassembler **idées et pipelines types** pour inspirer la création de nouveaux workflows.
-* Laisser les détails d’implémentation, dates, bugs… au `JOURNAL_2025.md` afin d’éviter toute redondance citeturn15file12.
+* Laisser les détails d’implémentation, dates, bugs… au `JOURNAL_2025.md` afin d’éviter toute redondance.
 
----
 
-## 2️⃣ Stack open‑source de référence (Sprint 4)
+### 2️⃣ Stack open‑source de référence (Sprint 4 – pivot B)
 
-| Couche                 | Outils clés                            | Rôle / Notes                                                      |
-| ---------------------- | -------------------------------------- | ----------------------------------------------------------------- |
-| **Chaînes & outils**   | **LangChain**                          | Wrappers LLM, loaders, tools                                      |
-| **Workflows**          | **LangGraph**                          | Graphe *think → validate → act*                                   |
-| **Multi‑agents**       | **CrewAI**                             | Débat, vote, plan hierarchique                                    |
-| **Observabilité**      | **Phoenix + OTEL**                     | « Phoenix first » avant tout test multi‑agents citeturn14file2 |
-| **Tests / Guardrails** | Pytest, TruLens, **Guardrails Colang** | CI GitHub verte                                                   |
-| **LLM Gateway**        | **LiteLLM**                            | Proxy OpenAI/Ollama ; mock CI                                     |
-| **Vecteurs**           | **ChromaDB**                           | Persistant Docker                                                 |
-| **Secret vault**       | **Secret MCP Server**                  | JWT + scopes                                                      |
+### 2.1 Compose client & UI Flows
+
+| Couche / Bloc             | Outils clés                                                                                      | Rôle / Notes                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| **Compose client**        | **ActivePieces 0.39 CE** + **LangServe** + **LangFlow** (privé) + **Phoenix** + Postgres + Redis | 1 compose = 1 maison préfabriquée ; LangFlow interne non exposé public ; Phoenix observabilité |
+| **UI Flows**              | **LangFlow** (catalogue) & **React‑Flow Builder** (Next.js)                                      | L’utilisateur dessine ses workflows ; branding & rôles via Builder                             |
+| **Automation & Triggers** | **ActivePieces CE** – Piece **RunAgentFlow**                                                     | Déclenche exécution d’un flow `/run‑<slug>` ; fin de la génération de scripts ActivePieces     |
+| **Chaînes & outils**      | **LangChain**                                                                                    | Wrappers LLM, loaders, tools                                                                   |
+| **Workflows**             | **LangGraph**                                                                                    | Graphe *think → validate → act*                                                                |
+| **Multi‑agents**          | **CrewAI**                                                                                       | Débat, vote, plan hiérarchique                                                                 |
+| **Observabilité**         | **Phoenix + OTEL**                                                                               | « Phoenix first » avant tout test multi‑agents                                                 |
+| **Tests / Guardrails**    | Pytest, TruLens, **Guardrails Colang**                                                           | CI GitHub verte                                                                                |
+| **LLM Gateway**           | **LiteLLM**                                                                                      | Proxy OpenAI/Ollama ; mock CI                                                                  |
+| **Vecteurs**              | **ChromaDB**                                                                                     | Persistant Docker                                                                              |
+| **Secret vault**          | **Secret MCP Server**                                                                            | JWT + scopes                                                                                   |
+
+*(Les autres sections 3 → 8 demeurent inchangées, numérotations conservées.)*
 
 ---
 
@@ -87,7 +94,7 @@
 
 ## 6️⃣ Model Context Protocol (MCP) : guide rapide
 
-### 6.1 Cheat‑sheet installation (YAML, 1 ligne)
+### 6.1 Cheat‑sheet installation (YAML, 1 ligne)
 
 ```yaml
 - cmd: pip install langchain-mcp-adapters fastmcp
@@ -95,8 +102,7 @@
   venv: on
 ```
 
-*…suite inchangée : serveur, appel Python, flags sécurité…* citeturn13file8
-
+> 📝 **Note** : exécuter cette commande **dans la branche `tenant/<slug>`** de votre client ; chaque maison possède son tableau électrique.
 ### 6.2 Intégration LangChain → LangGraph → CrewAI
 
 Déclarer `MCPTool` comme n’importe quel `BaseTool`, ajouter un nœud *act* dans LangGraph puis laisser CrewAI voter si plusieurs serveurs sont dispo. Tracer `trace=True` pour audit. citeturn13file8
@@ -264,11 +270,12 @@ Options Selenium IE, WinAppDriver, pywinauto, Edge‑IE mode, avec tableau Avan
 | **Migration Edge (mode IE)**  | Ouvrir Web100T dans Edge     | Compatible Playwright        | Demande action IT                |
 ---
 
-## 📝 Changelog
+## 9️⃣ Changelog
 
-| Version | Date       | Motif                                                                                                                                             |
-| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **v2**  | 2025‑05‑07 | Nettoyage complet : renumérotation, suppression journaux & métaphores, déplacement scénarios réels, ajout section MCP, maintien catalogue outils. |
-| **v1**  | 2025‑05‑03 | Création initiale (fourre‑tout).                                                                                                                  |
+| Version  | Date       | Motif                                                                                                                                                                                                            |
+| -------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **v2.2** | 2025‑05‑10 | Alignement pivot « LangFlow → React‑Flow Builder » : ajout lignes « Compose client », « UI Flows », « Automation & Triggers » ; inclusion Phoenix ; suppression mention ancienne génération scripts ActivePieces |
+| **v2.1** | 2025‑05‑10 | Alignement complet avec Scénario B : ajout ligne “Stack client”, mention branche tenant dans MCP, update en‑tête.                                                                                                |
+| **v2**   | 2025‑05‑07 | Nettoyage complet : renumérotation, suppression journaux & métaphores, déplacement scénarios réels, ajout section MCP, maintien catalogue outils.                                                                |
+| **v1**   | 2025‑05‑03 | Création initiale (fourre‑tout).     
 
----

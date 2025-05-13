@@ -1,34 +1,128 @@
-# Journal 2025 – Projet Agents IA
+# JOURNAL.md — Chronologie détaillée
 
-> **Version 2 – 7 mai 2025**
-
-Ce carnet recense **toutes** les actions, commandes et décisions techniques du projet. Les entrées sont classées **chronologiquement** (des plus récentes aux plus anciennes) ; un sommaire cliquable facilite la navigation. 
-
----
-
-## Sommaire
-
-* [2025‑05‑07 – Sprint 4A : Kick‑off ActivePieces #S4A\_ui](#2025-05-07--sprint4a)
-* [2025‑05‑06 – Sprint 3 ter : Post‑mortem Phoenix #S3c\_phoenix](#2025-05-06--sprint3ter)
-* [2025‑05‑05 – Sprint 3 bis : Consolidation Git & CI #S3b\_ci](#2025-05-05--sprint3bis)
-* [2025‑05‑02 – Sprint 3 : Implémentation CrewAI #S3\_crewai](#2025-05-02--sprint3)
-* [2025‑05‑02 – Sprint 2 : Orchestration LangGraph #S2\_graph](#2025-05-02--sprint2)
-* [2025‑05‑02 – Sprint 1 : Mémoire / Chroma #S1\_chroma](#2025-05-02--sprint1)
-* [2025‑04‑30 – Sprint 0 : Setup LangServe #S0\_setup](#2025-04-30--sprint0)
+> **Version 3 – 10 mai 2025**
+> Journal post‑pivot Scénario B
 
 ---
 
-## 2025-05-07 – Sprint 4A : Kick‑off ActivePieces #S4A\_ui <a id="2025-05-07--sprint4a"></a>
+## 2025‑05‑10 – Pivot Scénario B <a id="Pivot_B"></a>
 
-| Date       | Action                      | Détail / Commande                                                                               |
-| ---------- | --------------------------- | ----------------------------------------------------------------------------------------------- |
-| 2025-05-07 | **Création branche**        | `git checkout -b feat/s4a-activepieces`                                                         |
-| 2025-05-07 | **Clone ActivePieces core** | `git submodule add https://github.com/activepieces/activepieces-core.git external/activepieces` |
-| 2025-05-07 | **Docker Compose front**    | Ajout service `activepieces-ui` exposé sur **3000**                                             |
-| 2025-05-07 | **Phoenix démarré**         | `docker compose up -d phoenix` – collecteur OTEL prêt                                           |
-| 2025-05-07 | **Webhook test**            | Flow "Ping → Console" déclenché depuis UI : event log dans Phoenix OK                           |
+| Décision                                                         | Commande clé              | Statut |
+| ---------------------------------------------------------------- | ------------------------- | ------ |
+| 1 stack CE par client, abandon header X‑Tenant, ajout Edge‑Agent | `create_tenant.ps1 —help` | ✅      |
+  1. **Stack isolée ActivePieces CE (4A)**                         |                           | en cours|
+---
+
+## Journal de déploiement
+
+### 08/05/2025 – Phoenix
+
+* **Problème :** crash à cause des URLs doublées (`http://http://…`)
+* **Cause :** variables d’environnement `PHOENIX_HOST` / `PHOENIX_COLLECTOR_ENDPOINT` superflues
+* **Solution :** suppression des deux variables dans `.env`
+* **Vérification :** `curl.exe -I http://localhost:6006` → HTTP/1.1 200 OK
 
 ---
+
+## Journal de déploiement – **Phase 4A / ActivePieces**
+
+> *Session unique : 9 mai 2025 – dépôt **agent-ai***
+
+### 1. Clone initial du sous‑module **ActivePieces** (08/05/2025)
+
+| #   | Action                          | Commande YAML                                                                                                  | Résultat                 |
+| --- | ------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| 2‑1 | **Se placer à la racine**       | `cmd: cd C:\Users\Util\Desktop\agent-ai`<br>`path: ~`                                                          | ✔️                       |
+| 2‑2 | Clone (URL erronée)             | `cmd: git submodule add https://github.com/activepieces/activepieces-core.git external/activepieces`           | ❌ *Repository not found* |
+| 2‑3 | Nettoyage tentative ratée       | `cmd: git submodule deinit -f external/activepieces ; git rm -rf external/activepieces`                        | ✔️                       |
+| 2‑4 | **Ajout sous-module correct**   | `cmd: git submodule add https://github.com/activepieces/activepieces.git external/activepieces`                | ✔️ clone ≈ 273 Mo        |
+| 2‑5 | Commit (par mégarde sur `main`) | `cmd: git add .gitmodules external/activepieces && git commit -m "chore: add ActivePieces GPLv3 as submodule"` | ✔️ SHA `4dd995f`         |
+
+### 2. Branche locataire créée… puis annulée
+
+| #   | Action                                             | Commande                                                                                         | Résultat                                |
+| --- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------- |
+| B‑1 | Stash WIP (docs + Docker)                          | `cmd: git stash push -m "wip: docs et docker avant réorganisation"`                              | ✔️                                      |
+| B‑2 | Création **prématurée** `tenant/demo-activepieces` | `cmd: git branch tenant/demo-activepieces`<br>`cmd: git push -u origin tenant/demo-activepieces` | ✔️ *(incohérent vis‑à‑vis Vision 360°)* |
+| B‑3 | Alignement `main` ← origin                         | `cmd: git checkout main && git reset --hard origin/main`                                         | ✔️                                      |
+| B‑4 | Retour branche locataire + pop stash               | `cmd: git checkout tenant/demo-activepieces && git stash pop`                                    | ✔️                                      |
+
+### 3. Validation sous‑module
+
+| #   | Action                   | Commande                                          | Résultat       |
+| --- | ------------------------ | ------------------------------------------------- | -------------- |
+| V‑1 | Contrôle gitlink         | `cmd: git submodule status external/activepieces` | ✔️ `d0847488…` |
+| V‑2 | Init/update profondeur 1 | `cmd: git submodule update --init --depth 1`      | ✔️             |
+
+### 4. Nettoyage fichiers obsolètes
+
+| #   | Action                    | Commande                                                                 | Résultat         |
+| --- | ------------------------- | ------------------------------------------------------------------------ | ---------------- |
+| N‑1 | Suppression README racine | `cmd: git rm README.md && git commit -m "chore: remove obsolete README"` | ✔️ SHA `a294dfb` |
+| N‑2 | Push branche locataire    | `cmd: git push`                                                          | ✔️               |
+
+### 5. **Ré‑alignement Git complet** (09/05/2025)
+
+| #   | Action / Décision                            | Commande YAML                                                                                     | Résultat           |
+| --- | -------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------ |
+| G‑1 | Cherry‑pick sous-module sur `main`           | `cmd: git cherry-pick 4dd995f`                                                                    | ✔️ SHA `23893f1`   |
+| G‑2 | Cherry‑pick **infra Docker & docs**          | `cmd: git cherry-pick 19b2505`                                                                    | ✔️ SHA `1e71fc6`   |
+| G‑3 | Cherry‑pick README removal                   | `cmd: git cherry-pick a294dfb`                                                                    | ✔️                 |
+| G‑4 | Cherry‑pick docs onboarding & multi‑tenant   | `cmd: git cherry-pick 40eac5e`                                                                    | ✔️                 |
+| G‑5 | Push `main` réaligné                         | `cmd: git push origin main`                                                                       | GitHub ← `105b760` |
+| G‑6 | **Suppression branche locataire prématurée** | `cmd: git branch -D tenant/demo-activepieces`<br>`cmd: git push origin :tenant/demo-activepieces` | ✔️                 |
+| G‑7 | Contrôle final                               | `cmd: git branch -a`                                                                              | Liste = `* main`   |
+
+> **Bilan** : le dépôt est de nouveau conforme à la Vision 360° – aucune branche locataire fantôme.
+
+### 6. Pré‑commit *infra* (Docker & docs) — 09/05/2025
+
+| #   | Action                             | Commande YAML                                                                         | Résultat         |
+| --- | ---------------------------------- | ------------------------------------------------------------------------------------- | ---------------- |
+| P‑1 | Staging Docker & docs              | `git add .dockerignore .gitignore Dockerfile docker-compose.yml docs/ Dockerfile.app` | ✔️               |
+| P‑2 | Commit "infra: base Docker & docs" | `git commit -m "infra: base Docker & docs"`                                           | ✔️ SHA `78dfbdf` |
+
+### 7. Mise à jour `docker-compose.yml` + build images
+
+| #   | Action                                       | Commande                      | Résultat |
+| --- | -------------------------------------------- | ----------------------------- | -------- |
+| 4‑1 | Ajout Postgres / Redis / ActivePieces (mono) | édition compose               | ✔️       |
+| 4‑2 | Uniformisation restart policy                | —                             | ✔️       |
+| 4‑3 | Pull images distantes                        | `docker compose pull`         | ✔️       |
+| 4‑4 | Build LangServe server                       | `docker compose build server` | ✔️       |
+
+### 8. Démarrage stack complète & tests
+
+| #   | Action                    | Commande / Vérif          | Résultat        |
+| --- | ------------------------- | ------------------------- | --------------- |
+| 5‑1 | Lancement stack           | `docker compose up -d`    | ✔️              |
+| 5‑2 | Variables sécurité (.env) | ajout 2×32 car            | ✔️              |
+| 5‑3 | Accès UI                  | `http://localhost:3000`   | ✔️ écran signup |
+| 5‑4 | Création compte admin     | John Biche                | ✔️              |
+| 5‑5 | **Constat limitation UI** | pas de création workspace | 🟡              |
+
+### 9. Limitation « multi‑locataires » détectée
+
+* **Observation :** bannière « Unlock Projects » apparue.
+* **Impact :** impossibilité de créer workspace dans CE ≥ 0.28.
+* **Pistes (A/B/C)** énumérées (voir doc historique).
+* **Décision finale :** **pivot vers Scénario B (10 mai)** → 1 stack CE par client (voir #Pivot\_B).
+
+---
+
+### Entrée \[OBSOLETE – pivot B] Sprint 4A (flags EE) <a id="obsolete_ee"></a>
+
+*Sous‑module EE, patch flags `manageProjectsEnabled = true` – devenu caduc après pivot du 10 mai.*
+
+---
+
+## Leçons retenues
+
+* **Phoenix first** avant tout test.
+* **PowerShell only** sur Windows pour éviter confusion `curl`/`Invoke-RestMethod`.
+* **Stack par client** : toujours opérer dans `compose/<slug>`.
+* ADR pour tout hack temporaire.
+
 
 ## 2025-05-06 – Sprint 3 ter : Post‑mortem Phoenix Tracing #S3c\_phoenix <a id="2025-05-06--sprint3ter"></a>
 
