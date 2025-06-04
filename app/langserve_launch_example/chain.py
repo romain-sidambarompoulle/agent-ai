@@ -8,7 +8,7 @@ from langchain.prompts.chat import ChatPromptTemplate
 from langchain.schema.runnable import Runnable, RunnableLambda
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
-from app.agent_ai.graph import graph_exec
+from agent_ai.graph import graph_exec    # import direct sans 'app.'
 
 # --- Mémoire ---------------------------------------------------------------
 EMBED = OpenAIEmbeddings()            # ↳ traduit texte → vecteur
@@ -49,7 +49,8 @@ def get_chain() -> Runnable:
 
     # 1️⃣  Chercher souvenirs + enregistrer le prompt
     def _add_context(inputs: dict) -> dict:
-        user_prompt = inputs["topic"]
+        user_prompt = inputs["input"]
+        inputs["topic"] = user_prompt    
         last_prompt["topic"] = user_prompt      # on garde pour plus tard
         similar = MEMORY.similarity_search(user_prompt, k=4)
         context = "\n".join(d.page_content for d in similar)
