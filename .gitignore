@@ -25,4 +25,4 @@ docker-compose.override.yml
 Thumbs.db
 TREE.md
 compose/**/.env
-compose/demo/postgres-data/**
+compose/demo/postgres-data/
