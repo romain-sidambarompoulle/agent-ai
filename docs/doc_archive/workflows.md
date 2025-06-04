@@ -1,23 +1,32 @@
 # workflows.md
 
-> **Version 2 – 7 mai 2025**
-> Ce document sert de **mémo visuel** : pour chaque sprint, il montre *comment* les blocs s’enchaînent (diagramme) et *où copier‑coller* les commandes clés. Les métaphores chantier restent dans `00_explications_imagé.md` pour garder ce fichier 100 % opérationnel.
+> **Version 2.3 – 14 mai 2025**
+> Aligné sur *Boussole d’état – 14 mai 2025* (pivot « LangFlow → Builder maison », Scénario B : 1 stack Builder maison par client)
+> 🔗 Référence centrale : `docs/boussole_2025-05-10.md`
 
 ---
 
 ## 🔖 Sommaire
 
-* [Sprint 4A – Déclencheurs ActivePieces #S4A\_ui](#s4a)
-* [Sprint 4B – Orchestration CrewAI / LangGraph #S4B\_agents](#s4b)
+* [Sprint 4A – Déclencheurs ActivePieces **\[OBSOLETE\]**](#s4a)
+* [Sprint 4B – Orchestration multi‑agents](#s4b)
 * [Exemple d’application PDF → Odoo](#exemple)
 * [Templates & Chemins](#templates)
+* [Bonnes pratiques](#bonnes-pratiques)
 * [Changelog](#changelog)
+
+> 💡 **Note isolation** : toutes les commandes supposent que **vous êtes dans la branche `tenant/<slug>`** et dans le dossier `compose/<slug>` correspondant à la stack du client.
 
 ---
 
-## 🟢 Sprint 4A – Déclencheurs ActivePieces #S4A\_ui
+## 🟢 Sprint 4A – Déclencheurs ActivePieces <a id="s4a"></a>
 
-### Diagramme Mermaid
+> **\[OBSOLETE – remplacé par Builder]**
+> Historique : ActivePieces déclenchait les flows via la Piece **RunAgentFlow**.
+> Depuis le 14 mai 2025, le déclencheur est assuré par le **nœud Builder maison** (voir Sprint 4B).
+
+<details>
+<summary>Diagramme Mermaid (archive)</summary>
 
 ```mermaid
 flowchart TD
@@ -31,22 +40,24 @@ flowchart TD
     F --> G
 ```
 
-### Commandes YAML “ready to copy”
+</details>
+
+### Archives (non maintenues)
 
 ```yaml
 - cmd: ap import --file templates/variante_A.flow.json
-  path: C:\projets\agent-ai\external\activepieces
+  path: C:\projets\agent-ai\compose\<slug>\external\activepieces
   venv: off
-- cmd: docker compose up -d activepieces-ui
-  path: C:\projets\agent-ai
+- cmd: docker compose up -d
+  path: C:\projets\agent-ai\compose\<slug>
   venv: off
 ```
 
-*Rappel : démarrer ******************phoenix****************** avant l’UI pour tracer les webhooks.*
-
 ---
 
-## 🟠 Sprint 4B – Orchestration multi‑agents #S4B\_agents
+## 🟠 Sprint 4B – Orchestration multi‑agents <a id="s4b"></a>
+
+> Les orchestrations sont désormais **déclenchées par le nœud Builder maison** qui appelle `/run-<slug>`.
 
 ### Diagramme Mermaid (LangGraph + CrewAI)
 
@@ -69,10 +80,10 @@ graph TD
 
 ```yaml
 - cmd: python -m app.agent_ai.graph_runner --trace true
-  path: C:\projets\agent-ai
+  path: C:\projets\agent-ai\compose\<slug>
   venv: on
 - cmd: crewai run --config configs/crew_s4b.yaml
-  path: C:\projets\agent-ai
+  path: C:\projets\agent-ai\compose\<slug>
   venv: on
 ```
 
@@ -80,31 +91,41 @@ graph TD
 
 ---
 
----
+## 🧩 Templates & Chemins <a id="templates"></a>
 
-## 🧩 Templates & Chemins pas encore cree
-
-| Variante | Template ActivePieces              | Endpoint backend   | Doc implémentation    |
+| Variante | Template Builder                   | Endpoint backend   | Doc implémentation    |
 | -------- | ---------------------------------- | ------------------ | --------------------- |
 | A        | `/templates/variante_A.flow.json`  | `/run-graph`       | « workflows.md » §A   |
 | B‑1      | `/templates/variante_B1.flow.json` | `/run-crewai`      | « workflows.md » §B‑1 |
-| B‑2      | `/templates/variante_B2.flow.json` | `/run-crewai-lite` | «workflows.md » §B‑2  |
+| B‑2      | `/templates/variante_B2.flow.json` | `/run-crewai-lite` | « workflows.md » §B‑2 |
 | C        | `/templates/variante_C.flow.json`  | `/run-auto`        | « workflows.md » §C   |
 
-*Table d’origine conservée, simplement re‑ancrée ici.* citeturn20file19
+> Les templates sont identiques aux archives ActivePieces mais s’importent dorénavant directement dans **React‑Flow Builder**.
 
 ---
 
-## 📝 Changelog
+## 🛠️ Bonnes pratiques : organisation du code pour les agents et orchestrations <a id="bonnes-pratiques"></a>
 
-| Version | Date       | Motif                                                                                                   |
-| ------- | ---------- | ------------------------------------------------------------------------------------------------------- |
-| **v2**  | 2025‑05‑07 | Nettoyage métaphores supprimées, ajout Sprint 4A/4B (diagrammes, YAML), sommaire cliquable, tag sprint. |
-| v1      | 2025‑05‑01 | Première ébauche (templates variante A/B/C).                                                            |
+| Couche                | Contenu                                                                                                     | Exemple de dossier                 |
+| --------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| **🧰 Outils**         | Fonctions LangChain Tools, wrappers d’API, prompts Jinja, modèles Pydantic.                                 | `app/components/`                  |
+| **🧩 Flows / Graphs** | Un fichier **par orchestration** qui importe les outils et déclare les nœuds LangGraph ou les rôles CrewAI. | `app/flows/<nom_flow>.py`          |
+| **🚀 Runners**        | Script CLI / endpoint FastAPI qui appelle `create_flow()` puis `.run(input)`.                               | `app/runners/<nom_flow>_runner.py` |
+
+> 📌 Tout **commit** ou **test** se fait dans la branche `tenant/<slug>` ; jamais sur `main`.
 
 ---
 
-*Ce fichier est un mémo : ajoute un nouveau diagramme ou une commande YAML dès qu’un workflow est validé.*
+## 📝 Changelog <a id="changelog"></a>
+
+| Version  | Date       | Motif                                                                                                                                                              |
+| -------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **v2.3** | 2025‑05‑14 | Migration ActivePieces → Builder maison ; sprint 4A archivé, table Templates mise à jour, header & sommaire adaptés.                                               |
+| **v2.2** | 2025‑05‑10 | Ajout pivot LangFlow → React‑Flow Builder : header, note flows dessinés hors ActivePieces ; mise à jour diagramme Variant A **\[OBSOLETE – remplacé par Builder]** |
+| **v2.1** | 2025‑05‑10 | Alignement Scénario B : chemins `compose/<slug>`, suppression service *activepieces-ui*, rappel isolation tenant.                                                  |
+| **v2**   | 2025‑05‑07 | Nettoyage métaphores supprimées, ajout Sprint 4A/4B (diagrammes, YAML), sommaire cliquable, tag sprint.                                                            |
+| v1       | 2025‑05‑01 | Première ébauche (templates variante A/B/C).    
+
 
 # 📚 Blueprints visuels – Deux maîtres, trois offres
 

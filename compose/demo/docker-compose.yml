@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pg_demo
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"   
+  langflow:
+    image: langflowai/langflow:1.1.4  
+    ports:
+      - "7860:7860"          # accès local http://localhost:7860
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://phoenix:4318   # télémétrie (optionnel)
+    depends_on:
+      - phoenix
+    networks: [apnet]    
+  phoenix:
+    image: arizephoenix/phoenix:latest   
+    restart: unless-stopped          
+    networks: [apnet]
+    ports:
+      - "6006:6006"
+    env_file:
+      - .env
+  server:
+    build:
+      context: ../../app
+      dockerfile: langserve_launch_example/Dockerfile
+    image: langserve_launch_example:latest
+    restart: unless-stopped          
+    networks: [apnet]                    
+    ports:
+      - "8001:8001"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}   # lu dans ton fichier .env local
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  apnet:
+    driver: bridge      

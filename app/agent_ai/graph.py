@@ -1,5 +1,5 @@
 from langgraph.graph import StateGraph
-from app.crew import run as crew_run      # 🆕 branchement CrewAI
+from crew import run as crew_run  # 🆕 branchement CrewAI
 
 def think(state: dict) -> dict:
     return state                 # TODO: logique de réflexion

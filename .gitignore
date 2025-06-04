@@ -7,6 +7,7 @@ __pycache__/
 # Environnements
 .env
 .env.*
+.env.local
 
 # VS Code
 .vscode/
@@ -23,3 +24,5 @@ docker-compose.override.yml
 .DS_Store
 Thumbs.db
 TREE.md
+compose/**/.env
+compose/demo/postgres-data/
